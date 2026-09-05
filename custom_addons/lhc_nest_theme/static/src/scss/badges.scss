@@ -1,0 +1,66 @@
+// ===========================================================================
+// LHC NEST — status badges.
+//
+// The badge is a pill: pale tint ground, darker "ink" text. That split is what
+// makes it legible — a pale tint carrying the solid brand colour as its text
+// fails contrast at badge sizes, which is why every status token in this system
+// comes as a triplet.
+//
+// Odoo renders selection fields through `widget="badge"` (.o_field_badge) and
+// its decoration-* classes, so the mapping below is from Odoo's own decoration
+// vocabulary onto the brand palette. Nothing here invents a state — the states
+// are whatever the model already declares.
+// ===========================================================================
+
+@mixin lhc-pill($tint, $ink) {
+    background: $tint !important;
+    color: $ink !important;
+    border: 0 !important;
+}
+
+.o_field_badge .badge,
+.badge {
+    border-radius: var(--lhc-radius-pill);
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    line-height: 1.45;
+}
+
+// Odoo decoration classes → brand semantics.
+.badge.text-bg-success,
+.badge.text-bg-success:hover   { @include lhc-pill(var(--lhc-green-pale), var(--lhc-green-ink)); }
+
+.badge.text-bg-danger,
+.badge.text-bg-danger:hover    { @include lhc-pill(var(--lhc-red-pale), var(--lhc-red-ink)); }
+
+.badge.text-bg-warning,
+.badge.text-bg-warning:hover   { @include lhc-pill(var(--lhc-amber-pale), var(--lhc-amber-ink)); }
+
+.badge.text-bg-info,
+.badge.text-bg-info:hover      { @include lhc-pill(var(--lhc-blue-pale), var(--lhc-blue-ink)); }
+
+.badge.text-bg-primary,
+.badge.text-bg-primary:hover   { @include lhc-pill(var(--lhc-navy-bg), var(--lhc-navy)); }
+
+.badge.text-bg-secondary,
+.badge.text-bg-secondary:hover,
+.badge.text-bg-light,
+.badge.text-bg-muted           { @include lhc-pill(var(--lhc-gray-pale), var(--lhc-gray-ink)); }
+
+.badge.text-bg-dark            { @include lhc-pill(var(--lhc-navy-bg), var(--lhc-navy)); }
+
+// ---- Tags (many2many_tags) ----------------------------------------------
+// Odoo colours these from a fixed 12-colour wheel that has nothing to do with
+// this palette. Quietened to the neutral chip so a row of tags does not
+// out-shout the status pill beside it; a tag the user deliberately coloured
+// keeps its colour, because that is a choice they made.
+.o_field_many2many_tags .o_tag:not([class*="o_tag_color_"]),
+.o_field_tags .o_tag.o_tag_color_0 {
+    background: var(--lhc-navy-bg);
+    color: var(--lhc-navy);
+    border-radius: var(--lhc-radius-pill);
+    font-size: 11.5px;
+    font-weight: 600;
+}

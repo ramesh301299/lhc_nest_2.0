@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_withdrawal_list" model="ir.ui.view">
+        <field name="name">lhc.withdrawal.list</field>
+        <field name="model">lhc.withdrawal</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="date"/>
+                <field name="entity_id"/>
+                <field name="amount" sum="Total"/>
+                <field name="note"/>
+                <field name="entered_by"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lhc_withdrawal" model="ir.actions.act_window">
+        <field name="name">Personal Withdrawals</field>
+        <field name="res_model">lhc.withdrawal</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_entity': 1}</field>
+    </record>
+
+    <record id="view_lhc_withdrawal_search" model="ir.ui.view">
+        <field name="name">lhc.withdrawal.search</field>
+        <field name="model">lhc.withdrawal</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="entity_id"/>
+                <group expand="1" string="Group By">
+                    <filter name="group_entity" string="Name"
+                            context="{'group_by':'entity_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

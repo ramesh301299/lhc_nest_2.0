@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Audit Trail — the "Admin only — all system changes" screen.
+
+  Built on `mail.message` rather than a new log table. Every LHC model with
+  chatter already writes a tracked message on each change, so a separate audit
+  model would duplicate that data and could silently disagree with it. Reusing
+  mail.message also means Odoo's own access rules apply: a user sees audit rows
+  only for records they can already read, so the trail cannot become a way to
+  read data the record rules deny.
+-->
+<odoo>
+
+    <record id="view_lhc_audit_list" model="ir.ui.view">
+        <field name="name">lhc.audit.message.list</field>
+        <field name="model">mail.message</field>
+        <field name="arch" type="xml">
+            <list string="Activity Log" create="false" edit="false" delete="false"
+                  default_order="date desc">
+                <field name="date" string="When"/>
+                <field name="author_id" string="By"/>
+                <field name="model" string="Record Type"/>
+                <field name="record_name" string="Record"/>
+                <field name="subtype_id" string="Action" optional="show"/>
+                <field name="message_type" optional="hide"/>
+                <field name="body" string="Change" widget="html"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_audit_search" model="ir.ui.view">
+        <field name="name">lhc.audit.message.search</field>
+        <field name="model">mail.message</field>
+        <field name="arch" type="xml">
+            <search string="Audit Trail">
+                <!-- Matches the screen's "Search record, user or reference…" box. -->
+                <field name="record_name" string="Record"/>
+                <field name="author_id" string="By"/>
+                <field name="body" string="Change"/>
+
+                <!-- The screen's "Action:" dropdown. Only models that carry
+                     chatter can appear here; Settings changes are not tracked
+                     by mail.message, so there is deliberately no filter for it. -->
+                <filter name="act_agreement" string="Agreement"
+                        domain="[('model', '=', 'lhc.agreement')]"/>
+                <filter name="act_receipt" string="Receipt"
+                        domain="[('model', '=', 'lhc.receipt')]"/>
+                <filter name="act_maintenance" string="Maintenance"
+                        domain="[('model', '=', 'lhc.maintenance')]"/>
+                <filter name="act_tenant" string="Tenant"
+                        domain="[('model', '=', 'lhc.tenant')]"/>
+                <filter name="act_property" string="Property / Unit"
+                        domain="[('model', 'in', ['lhc.property', 'lhc.unit'])]"/>
+                <separator/>
+                <filter name="today" string="Today"
+                        domain="[('date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <filter name="last_week" string="Last 7 Days"
+                        domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_model" string="Record Type"
+                            context="{'group_by': 'model'}"/>
+                    <filter name="group_author" string="By"
+                            context="{'group_by': 'author_id'}"/>
+                    <filter name="group_date" string="Date"
+                            context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lhc_audit_trail" model="ir.actions.act_window">
+        <field name="name">Audit Trail</field>
+        <field name="res_model">mail.message</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_lhc_audit_list"/>
+        <field name="search_view_id" ref="view_lhc_audit_search"/>
+        <!-- Scoped to LHC records only: without this the action would also list
+             every unrelated system notification in the database. -->
+        <field name="domain">[('model', '=like', 'lhc.%')]</field>
+        <field name="context">{'search_default_group_model': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No changes recorded yet</p>
+            <p>Every tracked change to an LHC record appears here, with who made
+               it and when.</p>
+        </field>
+    </record>
+
+</odoo>

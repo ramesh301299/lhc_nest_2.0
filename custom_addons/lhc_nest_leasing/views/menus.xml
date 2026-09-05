@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leasing menus. Photos sit under Tools in the sidebar but the action belongs to leasing, which owns the model. -->
+<odoo>
+    <menuitem id="menu_lhc_agreements" name="Agreements" parent="lhc_nest.menu_lhc_leasing_grp"
+              action="action_lhc_agreement"
+              sequence="10"/>
+    <menuitem id="menu_lhc_templates" name="Agreement Templates" parent="lhc_nest.menu_lhc_leasing_grp"
+              action="action_lhc_template"
+              sequence="20"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_renewals" name="Renewal Reminders" parent="lhc_nest.menu_lhc_leasing_grp"
+              action="action_lhc_renewals"
+              sequence="30"/>
+    <menuitem id="menu_lhc_vacate" name="Vacate Checklist" parent="lhc_nest.menu_lhc_leasing_grp"
+              action="action_lhc_vacate"
+              sequence="40"/>
+    <menuitem id="menu_lhc_photos" name="Move-in / Move-out Photos" parent="lhc_nest.menu_lhc_tools_grp"
+              action="action_lhc_photo"
+              sequence="10"/>
+    <menuitem id="menu_lhc_advances" name="Advance &amp; Deposits" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_advance"
+              sequence="40"/>
+    <menuitem id="menu_lhc_quick_advance" name="Advance Installment" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_advance"
+              sequence="40"/>
+</odoo>

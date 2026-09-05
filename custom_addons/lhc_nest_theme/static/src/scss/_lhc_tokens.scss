@@ -1,0 +1,230 @@
+// ===========================================================================
+// LHC NEST — design tokens
+//
+// The single source of truth for every colour, radius, shadow, spacing step
+// and motion duration in the application. Published here as SCSS variables and
+// re-published as CSS custom properties in tokens.scss, so a hex code is never
+// repeated outside this addon and the palette can be retuned in one place.
+//
+// This file is PREPENDED to both variable bundles, which are inlined into
+// every other bundle. It must therefore contain ONLY variable declarations —
+// a rule here would be emitted once per bundle that includes it.
+//
+// ---------------------------------------------------------------------------
+// The identity: navy, gold, concrete.
+//
+//   GOLD      #B7905B — the PRIMARY brand colour: the dominant fill and
+//             the primary action
+//   NAVY      #111B30 — the SECONDARY: the rail, the app bar, dialog lids,
+//             headings, and the text that sits ON the gold
+//   GOLD      the accent — the one thing you are most likely to press, and
+//             the "you are here" marker. Rationed: if it marked five things
+//             on a screen it would mark none.
+//   CONCRETE  the warm neutral ground the white cards sit on
+//
+// ---------------------------------------------------------------------------
+// Contrast: every pairing below was checked against WCAG 2.1 AA on the three
+// grounds it actually renders on — white cards, the concrete page wash, and
+// the pale chip tints. Where a value did not clear 4.5:1 it was darkened until
+// it did, and the measured ratio is noted at the line. Those notes are why the
+// file is long; they are also why the next edit can be made safely.
+// ===========================================================================
+
+
+// --- Brand: deep navy -----------------------------------------------------
+// 17.06:1 on white. Carries the rail, dialog headers, headings and every
+// primary action.
+// #111B30 is the FROZEN brand navy (brand-tokens.json). 17.17:1 on white.
+$lhc-navy:         #111B30;
+$lhc-navy-dark:    #0a1120;   // the rail's deeper wells
+$lhc-navy-light:   #2a3550;   // raised navy: hovered nav rows, dividers on navy
+$lhc-navy-hover:   #1d2a45;   // a hovered navy button
+$lhc-navy-bg:      #e9eaee;   // tint behind a navy chip
+
+
+// --- Accent: premium gold -------------------------------------------------
+// #B7905B is 2.94:1 on white. It is a FILL, never a word on a light ground.
+// Navy ON this gold is 5.84:1, white is 2.89:1 — which is why every gold
+// control in this system carries navy text and none of them carry white.
+// #B7905B is the FROZEN brand gold (brand-tokens.json), and it is the
+// PRIMARY brand colour: the dominant fill, the primary action, the accent.
+$lhc-gold:         #B7905B;
+$lhc-gold-dark:    #96754a;   // hover / pressed
+$lhc-gold-light:   #cfad7e;   // lit edge of the gradient — 8.12:1 on the rail
+// The readable one: 5.22:1 on white, 4.79:1 on concrete. Use it whenever the
+// gold has to be a glyph or a word rather than a background.
+$lhc-gold-fg:      #8a6a3f;
+$lhc-gold-bg:      #f7f1e9;   // tint
+
+
+// --- Secondary: steel -----------------------------------------------------
+// Links, informational chrome, the quieter half of a two-button pair. Steel
+// rather than another bright blue, so it reads as brand chrome and $lhc-blue
+// below stays unambiguously "information". 7.97:1 on white.
+$lhc-steel:        #2c5282;
+$lhc-steel-dark:   #1e3a5f;
+$lhc-steel-bg:     #e4edf7;
+
+
+// --- Surfaces -------------------------------------------------------------
+$lhc-bg:           #FAF9F6;   // the workspace ground — the brand IVORY
+$lhc-card:         #ffffff;
+$lhc-cream:        #FDFCFA;   // the lit top of a card gradient
+
+// The header ROW of a table — Odoo's list views and the LHC tables alike.
+// One token, so every list in the system bands its head the same way.
+//
+// Steel at chip strength rather than either obvious candidate. A header the
+// colour of the page behind it stops reading as a header; a navy one is chrome
+// that has come loose from the rail. Navy on this is 13.4:1, so the uppercase
+// label clears AA several times over.
+//
+// Panel and card headers deliberately do NOT use it — they sit on white,
+// because a tinted bar on every card turns each card into its own object
+// competing with the table under it. Dialog headers are navy instead, set once
+// on .modal-header in dialog.scss.
+// NAVY, on request. It was a pale steel tint, on the reasoning that a navy
+// header is "chrome that has come loose from the rail" — but with the app bar
+// and the rail both navy now, a navy table head reads as the same system
+// rather than as a stray. The ink token below travels with it: change the
+// band and the text that sits on it in one place, or the next edit gets navy
+// on navy.
+$lhc-section-h:    #{$lhc-navy};
+// 17.17:1 on the band.
+$lhc-section-ink:  #ffffff;
+// The sorted column's marker. The LIT gold — 8.12:1 here, where the readable
+// gold used on light grounds would be 3.44:1 and fail.
+$lhc-section-mark: #{$lhc-gold-light};
+
+// Dividers sit near 1.2:1 and that is deliberate. WCAG 1.4.11 covers UI
+// components "required to understand the content", and a hairline between two
+// table rows is not one — the rows are already separated by space.
+//
+// What DOES need 3:1 is the border of an input, because it is the only thing
+// telling a user where the control is. That is why it is a separate token.
+$lhc-border:       #e2e6ee;   // strong divider — decorative
+$lhc-border-2:     #eef0f5;   // subtle divider — decorative
+$lhc-input-border: #7c8aa0;   // 3.50:1 on white: a control boundary, not a rule
+
+
+// --- Text -----------------------------------------------------------------
+$lhc-text:         #17203a;   // ink, a step off the brand navy
+$lhc-muted:        #5b6779;   // 5.74 white / 5.26 concrete / 5.06 on a tint
+$lhc-muted-2:      #616d7e;   // the second, quieter step — still AA everywhere
+
+// Non-text use only: rules, watermarks, decorative glyphs. 2.9:1 on white, so
+// it must never carry a glyph that means something — an icon conveying state
+// is content, and content has to be readable.
+$lhc-muted-decor:  #64748b;
+
+// For a glyph that must stay readable while looking recessed — a disabled but
+// still meaningful control, a placeholder icon. 3.76:1 on white.
+$lhc-icon-quiet:   #78859a;
+
+
+// --- Semantic -------------------------------------------------------------
+// Three tokens each, and the split matters. The base is a FILL (bars, dots,
+// solid buttons); -ink is the readable text version; -pale is the chip tint
+// that -ink is guaranteed to clear 4.5:1 on.
+$lhc-green:  #2e7d52;  $lhc-green-pale:  #e1ede7;  $lhc-green-ink:  #1c5c3c;
+$lhc-red:    #b83232;  $lhc-red-pale:    #f5e2e2;  $lhc-red-ink:    #8f2323;
+$lhc-amber:  #b85c00;  $lhc-amber-pale:  #f5e8db;  $lhc-amber-ink:  #7a3d00;
+$lhc-blue:   #1a4e8a;  $lhc-blue-pale:   #dfe6ef;  $lhc-blue-ink:   #123a68;
+$lhc-teal:   #0d7d74;  $lhc-teal-pale:   #ddedec;  $lhc-teal-ink:   #0a5c56;
+$lhc-purple: #5b3fa8;  $lhc-purple-pale: #e8e2f2;  $lhc-purple-ink: #422d7a;
+$lhc-gray-pale: #eef1f5; $lhc-gray-ink:  #475569;
+
+// The outline of a tinted surface. A tinted card outlined in generic grey
+// reads as a grey card someone happened to fill in; outlined in its own hue it
+// reads as one object. Each value is its tint carried roughly a fifth of the
+// way towards its own fill.
+$lhc-green-line:  #c2ddd0;
+$lhc-red-line:    #e9c4c4;
+$lhc-amber-line:  #f0d9bd;
+$lhc-blue-line:   #c3d1e4;
+$lhc-teal-line:   #bfdcd9;
+$lhc-purple-line: #d3c8e6;
+$lhc-gray-line:   #dde3ec;
+
+
+// --- Neutral ramp ---------------------------------------------------------
+// Warmed towards the concrete ground rather than Bootstrap's cool greys, so a
+// quiet surface on a card and the page behind it belong to the same family.
+$lhc-gray-50:   #FAF9F6;
+$lhc-gray-100:  #f1f2f5;
+$lhc-gray-200:  #e9ebf0;
+$lhc-gray-300:  #ced3dc;
+$lhc-gray-400:  #a6acb8;
+$lhc-gray-500:  #5b6779;
+$lhc-gray-700:  #223049;
+$lhc-gray-800:  #111B30;
+
+
+// --- The rail -------------------------------------------------------------
+// Its own small set, because the sidebar is the one surface where everything
+// sits on the primary colour and the ratios run the other way.
+$lhc-nav-bg:        $lhc-navy;
+$lhc-nav-well:      #11111e;                    // ground behind an open group
+$lhc-nav-text:      #d1d1d5;                    // idle item — 11.20:1
+$lhc-nav-text-on:   #ffffff;                    // active item — 17.06:1
+$lhc-nav-label:     #a3a3ab;                    // section heading — 6.81:1
+$lhc-nav-indicator: $lhc-gold;                  // 5.86:1 on the rail
+$lhc-nav-active-bg: rgba(183, 144, 91, .14);
+$lhc-nav-hover-bg:  rgba(255, 255, 255, .08);
+$lhc-nav-border:    rgba(255, 255, 255, .12);
+
+
+// --- Shape ----------------------------------------------------------------
+// Enterprise, not consumer mobile: nothing rounder than 14px.
+$lhc-radius:      8px;    // cards, inputs, medium controls
+$lhc-radius-sm:   6px;    // chips, small controls
+$lhc-radius-btn:  8px;    // buttons
+$lhc-radius-lg:   14px;   // large containers, modals, list cards
+$lhc-radius-pill: 999px;  // status pills
+
+// Barely there. A card that floats is a card competing with its own content.
+$lhc-shadow:    0 1px 3px rgba(17, 27, 48, .07), 0 1px 2px rgba(17, 27, 48, .05);
+$lhc-shadow-md: 0 6px 16px rgba(17, 27, 48, .10), 0 2px 5px rgba(17, 27, 48, .06);
+$lhc-shadow-lg: 0 14px 36px rgba(17, 27, 48, .13), 0 3px 10px rgba(17, 27, 48, .07);
+
+
+// --- Spacing scale --------------------------------------------------------
+$lhc-space-1: 4px;
+$lhc-space-2: 8px;
+$lhc-space-3: 12px;
+$lhc-space-4: 16px;
+$lhc-space-6: 24px;
+$lhc-space-8: 32px;
+
+
+// --- Motion ---------------------------------------------------------------
+// "Smooth" is consistent, short, well-eased transitions, not long animations.
+// ERP software should feel fast.
+$lhc-ease: cubic-bezier(.4, 0, .2, 1);
+$lhc-fast: 120ms;
+$lhc-base: 180ms;
+$lhc-slow: 260ms;
+
+
+// --- Typography -----------------------------------------------------------
+$lhc-font-sans: ('Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 'Helvetica Neue', Arial, sans-serif);
+// Tabular figures so rupee columns and reference codes line up vertically.
+$lhc-font-mono: ('JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas,
+                 'Liberation Mono', 'Courier New', monospace);
+
+
+// --- Focus ring -----------------------------------------------------------
+// One definition used everywhere, so keyboard focus is never invisible. Navy
+// rather than gold: focus follows the keyboard around the whole screen, and
+// gold is reserved for the thing you meant to press.
+$lhc-focus-ring: 0 0 0 3px rgba(17, 27, 48, .22);
+
+
+// --- Breakpoints ----------------------------------------------------------
+// Kept as plain numbers rather than Bootstrap's map so every media query in
+// this addon reads the same value, and so a stylesheet that lands outside the
+// helpers bundle still compiles.
+$lhc-bp-lg: 1200px;   // wide laptop — the systray starts giving up room
+$lhc-bp-md: 820px;    // tablet — the sidebar goes off-canvas
+$lhc-bp-sm: 600px;    // phone — tables become cards

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Report menus. The whole Reports group is Admin-only, and each leaf repeats the restriction so it holds even if the group header is ever relaxed. -->
+<odoo>
+    <menuitem id="menu_lhc_dashboard" name="Dashboard" parent="lhc_nest.menu_lhc_root"
+              action="action_lhc_dashboard_cards"
+              sequence="10"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_withdrawals" name="Personal Withdrawals" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_withdrawal"
+              sequence="10"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_profitability" name="Profitability" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_profitability"
+              sequence="20"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_bank_collection" name="Bank-wise Collection" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_bank_collection"
+              sequence="30"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_gst_summary" name="GST / Non-GST Summary" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_gst_summary"
+              sequence="40"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_gst_payment" name="GST Paid to Govt." parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_gst_payment"
+              sequence="50"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_auditor_fee" name="Auditor Fees" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_auditor_fee"
+              sequence="60"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_tds" name="TDS Credit Tracker" parent="lhc_nest.menu_lhc_reports_grp"
+              action="action_lhc_tds_tracker"
+              sequence="70"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_quick_gstpay" name="GST Paid to Govt." parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_gst_payment"
+              sequence="70"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_quick_auditor" name="Auditor Fees" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_auditor_fee"
+              sequence="80"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_quick_withdrawal" name="Personal Withdrawal" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_withdrawal"
+              sequence="90"
+              groups="lhc_nest.group_lhc_admin"/>
+</odoo>

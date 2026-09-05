@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_bill_list" model="ir.ui.view">
+        <field name="name">lhc.bill.list</field>
+        <field name="model">lhc.bill</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state=='paid'" decoration-warning="state=='awaiting'">
+                <field name="name"/>
+                <field name="doc_type"/>
+                <field name="tenant_id"/>
+                <field name="unit_id"/>
+                <field name="rent_amount"/>
+                <field name="gst_amount"/>
+                <field name="maintenance_amount"/>
+                <field name="total"/>
+                <field name="period"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_bill_form" model="ir.ui.view">
+        <field name="name">lhc.bill.form</field>
+        <field name="model">lhc.bill</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_mark_paid" type="object" string="Mark as Paid"
+                            class="btn-primary" invisible="state != 'awaiting'"/>
+                    <button name="%(action_report_lhc_bill)d" type="action"
+                            string="🖨️ Print" class="btn-secondary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="doc_type"/>
+                            <field name="agreement_id"/>
+                            <field name="tenant_id"/>
+                            <field name="unit_id"/>
+                            <field name="gst_applicable"/>
+                        </group>
+                        <group>
+                            <field name="period"/>
+                            <field name="rent_amount"/>
+                            <field name="gst_amount"/>
+                            <field name="maintenance_amount"/>
+                            <field name="total"/>
+                        </group>
+                    </group>
+                    <group string="Bundle pending tenant-payable maintenance">
+                        <field name="maintenance_ids" nolabel="1">
+                            <list>
+                                <field name="date"/>
+                                <field name="expense_type"/>
+                                <field name="amount"/>
+                                <field name="recovery_status"/>
+                            </list>
+                        </field>
+                    </group>
+                    <field name="note"/>
+                    <field name="receipt_id" readonly="1" invisible="not receipt_id"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_bill" model="ir.actions.act_window">
+        <field name="name">Bill Before Payment</field>
+        <field name="res_model">lhc.bill</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_lhc_monthly_run" model="ir.actions.server">
+        <field name="name">Generate Monthly Billing Run</field>
+        <field name="model_id" ref="model_lhc_bill"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_generate_monthly_run()</field>
+    </record>
+</odoo>

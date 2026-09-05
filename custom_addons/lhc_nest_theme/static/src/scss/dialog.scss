@@ -1,0 +1,211 @@
+// ===========================================================================
+// LHC NEST — dialogs and wizards.
+//
+// A confirmation, a transient-model wizard and a record created in a modal are
+// the same object wearing different content, so they get one treatment set
+// once here. Setting it per screen is three ways for them to drift.
+//
+// The lid is navy. Section headers on the PAGE stay on a light tint — a list
+// header sits among its own rows and has to stay quiet — but a dialog header
+// is the lid of something that has taken over the whole screen, and that one
+// is allowed to be loud. White on this navy is 17.06:1.
+// ===========================================================================
+
+.modal {
+
+    .modal-content {
+        border: 0;
+        border-radius: var(--lhc-radius-lg);
+        box-shadow: var(--lhc-shadow-lg);
+        background: var(--lhc-surface);
+        overflow: hidden;
+    }
+
+    // --- The lid ----------------------------------------------------------
+    .modal-header {
+        background: var(--lhc-grad-navy);
+        border-bottom: 0;
+        padding: 15px 20px;
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 650;
+            letter-spacing: -.01em;
+            color: #fff;
+        }
+
+        // Odoo's close glyph is a dark SVG mask. Inverted so it stays visible
+        // on the navy, and dimmed rather than given a hover plate: a light
+        // plate behind an inverted glyph reads as a hole punched in the bar.
+        .btn-close {
+            border-radius: var(--lhc-radius-sm);
+            filter: invert(1) grayscale(1) brightness(2);
+            opacity: .75;
+            transition: opacity var(--lhc-fast) var(--lhc-ease);
+
+            &:hover { opacity: 1; }
+        }
+    }
+
+    // --- What gets capped, and it moved -----------------------------------
+    // The cap used to be `max-height: 68vh` on the body alone. That is a magic
+    // number which knows nothing about the two bars stacked around it: on a
+    // short viewport — a phone held sideways, a laptop with a browser toolbar
+    // and a database banner — 68vh of body plus the navy lid plus the action
+    // bar plus Bootstrap's own dialog margins adds up to more than the screen.
+    // The footer then went off the bottom edge and the buttons it holds became
+    // unreachable, which is the exact failure the cap existed to prevent.
+    //
+    // So cap the CONTENT and let flex do the arithmetic instead. `.modal-content`
+    // is already a flex column; with the header and footer at their natural
+    // height, the body takes whatever is genuinely left over and scrolls inside
+    // that. Correct at every viewport height, and no number to keep in sync.
+    .modal-content {
+        // dvh follows the mobile browser's collapsing toolbars. The vh line is
+        // the fallback for engines without it and must stay first — an engine
+        // that understands dvh takes the second, one that does not keeps the
+        // first and discards the line it cannot parse.
+        max-height: calc(100vh - 3.5rem);
+        max-height: calc(100dvh - 3.5rem);
+    }
+
+    .modal-body {
+        padding: 20px;
+        font-size: 13px;
+        background: var(--lhc-surface);
+
+        // `min-height: 0` is the part that actually lets a flex child shrink
+        // below its content height. Without it the body refuses to compress,
+        // and it would push the footer out however the cap above is written.
+        flex: 1 1 auto;
+        min-height: 0;
+
+        // Both axes named together, deliberately. `overflow-y: auto` on its
+        // own leaves the x axis at `visible`, which the CSS overflow spec then
+        // computes to `auto` because the other axis scrolls — quietly giving
+        // every wizard a horizontal scrollbar nobody asked for. A wide table
+        // inside a dialog still scrolls in its own container.
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    // --- The action bar ---------------------------------------------------
+    // A recessed band, so the buttons read as the close of the dialog rather
+    // than as the last row of the form.
+    .modal-footer {
+        background: var(--lhc-bg);
+        border-top: 1px solid var(--lhc-border);
+        padding: 14px 20px;
+        justify-content: flex-end;
+        gap: 9px;
+
+        > * { margin: 0; }
+    }
+
+    .modal-dialog { transition: transform var(--lhc-base) var(--lhc-ease); }
+}
+
+.modal-backdrop.show { opacity: .45; }
+
+// ---- A form view hosted in a dialog --------------------------------------
+// The sheet stays flat: a card inside a card is clutter, and the modal is
+// already the card.
+.modal .o_form_view .o_form_sheet_bg {
+    background: transparent;
+    padding: 0;
+
+    > .o_form_sheet {
+        border: 0;
+        box-shadow: none;
+        padding: 0;
+        max-width: none;
+        background: transparent;
+    }
+}
+
+// The statusbar inside a dialog has no page behind it to separate from.
+.modal .o_form_view .o_form_statusbar {
+    padding-inline: 0;
+    border-bottom: 1px solid var(--lhc-border);
+    margin-bottom: var(--lhc-space-4);
+    min-height: 0;
+}
+
+// ===========================================================================
+// The create wizard.
+//
+// `lhc-create-dialog` is set by create/create_dialog.js, through a private copy
+// of Odoo's FormViewDialog template, onto the `.modal-content` of the dialog it
+// opens. Everything below therefore applies to a record being CREATED in a
+// modal and not to the record dialogs Odoo opens for its own reasons — a
+// one2many line, a many2one "Create and edit", the calendar's event popup.
+// ===========================================================================
+.modal-content.lhc-create-dialog {
+
+    // A record being created has no workflow yet, so the stage strip in the
+    // header is a row of chevrons pointing at nothing.
+    .o_form_statusbar .o_statusbar_status { display: none; }
+
+    // Smart buttons count related records and a record that does not exist has
+    // none, so the box is a row of zeroes. (Odoo's form compiler already drops
+    // it inside a dialog; this covers a view that draws its own.)
+    .oe_button_box { display: none; }
+
+    // Chatter is the log of what has happened to a record. Nothing has.
+    .o-mail-Form-chatter,
+    .o-mail-Chatter { display: none; }
+
+    .modal-body { padding: 22px 24px; }
+
+    // -----------------------------------------------------------------------
+    // Notebook pages become numbered steps.
+    //
+    // In a create wizard the pages of a notebook genuinely ARE stages of one
+    // task — "Customer, then Agreement, then Site" — rather than parallel views
+    // of a saved record, so they are numbered. The number is drawn with a CSS
+    // counter off the tab markup that is already there: no template is
+    // overridden, nothing is added to the DOM, and a wizard whose form has no
+    // notebook is simply unaffected.
+    // -----------------------------------------------------------------------
+    .o_form_view .o_notebook > .o_notebook_headers {
+        border-bottom: 1px solid var(--lhc-border);
+        margin-bottom: 20px;
+
+        .nav-tabs {
+            counter-reset: lhc-step;
+            gap: 4px;
+
+            .nav-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 9px;
+                padding: 10px 16px;
+                border-bottom-width: 2px;
+
+                &::before {
+                    counter-increment: lhc-step;
+                    content: counter(lhc-step);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 22px;
+                    height: 22px;
+                    flex: 0 0 22px;
+                    border-radius: 50%;
+                    background: var(--lhc-gray-200);
+                    color: var(--lhc-muted);
+                    font-size: 11px;
+                    font-weight: 700;
+                    font-variant-numeric: tabular-nums;
+                    transition: background-color var(--lhc-fast) var(--lhc-ease),
+                                color var(--lhc-fast) var(--lhc-ease);
+                }
+
+                &.active::before {
+                    background: var(--lhc-navy);
+                    color: #fff;
+                }
+            }
+        }
+    }
+}

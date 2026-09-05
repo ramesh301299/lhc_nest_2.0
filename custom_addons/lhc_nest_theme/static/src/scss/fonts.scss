@@ -1,0 +1,54 @@
+// ===========================================================================
+// LHC NEST — Inter, self-hosted.
+//
+// Replaces the Google Fonts <link> that used to be injected into `web.layout`.
+// Three reasons the CDN had to go, and they are the same three that made
+// lhc_2.0 self-host:
+//
+//   * OFFLINE. An on-premise deployment, or any site behind a proxy that does
+//     not whitelist fonts.gstatic.com, never receives the face. The backend
+//     then silently falls back to the platform UI font and stops looking like
+//     the product — the failure is invisible until someone compares screens.
+//   * PRIVACY. Every backend page view announced itself to a third party, on
+//     screens that show tenant names and client financials.
+//   * SPEED. Two preconnects plus a render-blocking stylesheet plus the font
+//     fetches, on the critical path of every page load, before the first
+//     glyph could be painted.
+//
+// A `@font-face` in the bundle is safe where the old CSS `@import` was not:
+// the hazard that drove the <link> workaround was the `;` inside the Google
+// URL's `wght@400;500;...` parameter terminating an @import early and breaking
+// the whole concatenated bundle. There is no @import and no query string here.
+//
+// font-display: swap — the layout is drawn in the fallback and reflowed when
+// Inter lands, rather than holding the page blank waiting for a font.
+//
+// Weights 400/500/600/700. Nothing in this theme asks for 800: the brand takes
+// its cue from lhc_2.0, where the boldest step is 700 and headings sit at 650
+// so the near-black navy does not read as heavy at display sizes.
+// ===========================================================================
+
+@each $weight in (400, 500, 600, 700) {
+    // latin-ext first; browsers select by unicode-range, so order is cosmetic.
+    @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: $weight;
+        font-display: swap;
+        src: url("/lhc_nest_theme/static/src/fonts/inter-latin-ext-#{$weight}-normal.woff2") format("woff2");
+        unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F,
+                       U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+                       U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: $weight;
+        font-display: swap;
+        src: url("/lhc_nest_theme/static/src/fonts/inter-latin-#{$weight}-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                       U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+                       U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+                       U+FEFF, U+FFFD;
+    }
+}

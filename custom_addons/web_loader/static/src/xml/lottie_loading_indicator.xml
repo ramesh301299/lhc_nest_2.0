@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        Add a mount point inside the loading indicator for the Lottie player.
+
+        Unlike BlockUI (whose template is an inline xml`...` literal and so
+        cannot be inherited), web.LoadingIndicator is a real named template, so
+        plain t-inherit works here - no copying of Odoo's markup, nothing to
+        re-sync on upgrade.
+
+        The "Loading" text node is deliberately left in place: loader.css
+        collapses it with font-size: 0 so it stays available to screen readers.
+    -->
+    <t t-name="web_loader.LoadingIndicator" t-inherit="web.LoadingIndicator" t-inherit-mode="extension">
+        <xpath expr="//span" position="inside">
+            <div class="o_web_loader_lottie" t-ref="lottie"/>
+        </xpath>
+    </t>
+
+</templates>

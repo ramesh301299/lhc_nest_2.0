@@ -1,0 +1,376 @@
+// LHC NEST client view — the customer-facing screen for an Odoo model.
+//
+// Deliberately does not look like Odoo's list/form. It uses the same tokens as
+// the rest of the LHC theme, so a client moving between an LHC screen and a
+// Contacts screen sees one product.
+
+.lhc-cv {
+    // The client view is a client action: it is a direct child of the action
+    // manager with no `.o_content` to inset it, so it carries its own page
+    // padding or its content sits against the rail. Top stays zero so the navy
+    // bar reaches the top edge like every other screen's does.
+    padding-top: 0;
+    padding-right: var(--lhc-pad);
+    padding-bottom: var(--lhc-pad);
+    padding-left: var(--lhc-pad);
+    background: var(--lhc-bg);
+    color: var(--lhc-ink, #111B30);
+}
+
+// ---- Header --------------------------------------------------------------
+.lhc-cv-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.lhc-cv-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+
+    h1 {
+        margin: 0;
+        font-size: clamp(19px, 2.4vw, 25px);
+        font-weight: 700;
+        letter-spacing: -.02em;
+        line-height: 1.2;
+        // A long contact name must not push the action buttons off-screen.
+        overflow-wrap: anywhere;
+    }
+}
+
+.lhc-cv-icon { font-size: 22px; flex-shrink: 0; }
+
+.lhc-cv-sub {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(17, 27, 48, .5);
+    margin-top: 2px;
+}
+
+.lhc-cv-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+// ---- Buttons -------------------------------------------------------------
+.lhc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid rgba(17, 27, 48, .16);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--lhc-ink, #111B30);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .15s;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) { border-color: var(--lhc-gold, #B7905B); }
+    &:disabled { opacity: .4; cursor: not-allowed; }
+    &:focus-visible { outline: 2px solid var(--lhc-gold, #B7905B); outline-offset: 2px; }
+}
+
+.lhc-btn-primary {
+    background: var(--lhc-navy, #111B30);
+    border-color: var(--lhc-navy, #111B30);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+        background: var(--lhc-gold, #B7905B);
+        border-color: var(--lhc-gold, #B7905B);
+    }
+}
+
+.lhc-btn-danger {
+    color: #94331f;
+    border-color: rgba(148, 51, 31, .35);
+
+    &:hover:not(:disabled) { background: #fdf2ef; border-color: #94331f; }
+}
+
+.lhc-btn-icon { padding: 6px 11px; font-size: 15px; line-height: 1; }
+
+// ---- Toolbar -------------------------------------------------------------
+.lhc-cv-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.lhc-cv-search {
+    flex: 1 1 240px;
+    max-width: 380px;
+    padding: 9px 14px;
+    border: 1px solid rgba(17, 27, 48, .16);
+    border-radius: 7px;
+    background: #fff;
+    font-size: 13.5px;
+
+    &:focus {
+        outline: none;
+        border-color: var(--lhc-gold, #B7905B);
+        box-shadow: 0 0 0 3px rgba(183, 144, 91, .15);
+    }
+}
+
+.lhc-cv-pager {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lhc-cv-range {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(17, 27, 48, .55);
+    font-variant-numeric: tabular-nums;
+}
+
+// ---- Table ---------------------------------------------------------------
+// The wrapper scrolls, not the page — a wide model must never make the whole
+// screen slide sideways.
+.lhc-cv-tablewrap {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid rgba(17, 27, 48, .1);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(17, 27, 48, .04), 0 10px 28px -18px rgba(17, 27, 48, .3);
+}
+
+.lhc-cv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+
+    th {
+        position: sticky;
+        top: 0;
+        padding: 11px 16px;
+        text-align: left;
+        white-space: nowrap;
+        background: #faf7f0;
+        border-bottom: 1px solid rgba(17, 27, 48, .1);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+        color: rgba(17, 27, 48, .5);
+        cursor: pointer;
+        user-select: none;
+
+        &:hover { color: var(--lhc-gold, #B7905B); }
+        &.lhc-sorted { color: var(--lhc-navy, #111B30); }
+    }
+
+    .lhc-sort { margin-left: 5px; font-size: 8px; }
+
+    td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(17, 27, 48, .06);
+        vertical-align: middle;
+    }
+
+    tbody tr {
+        cursor: pointer;
+        transition: background .12s;
+
+        &:hover { background: #fbf8f1; }
+        &:last-child td { border-bottom: none; }
+    }
+
+    // Numbers align on their digits, which is what makes a column scannable.
+    .lhc-t-monetary,
+    .lhc-t-float,
+    .lhc-t-integer {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+// ---- Form ----------------------------------------------------------------
+.lhc-cv-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    margin-bottom: -1px;
+    padding-bottom: 1px;
+}
+
+.lhc-cv-tab {
+    padding: 9px 16px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(17, 27, 48, .55);
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover { color: var(--lhc-navy, #111B30); }
+
+    &.lhc-active {
+        background: #fff;
+        border-color: rgba(17, 27, 48, .1);
+        color: var(--lhc-navy, #111B30);
+    }
+}
+
+.lhc-cv-card {
+    background: #fff;
+    border: 1px solid rgba(17, 27, 48, .1);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 1px 2px rgba(17, 27, 48, .04), 0 10px 28px -18px rgba(17, 27, 48, .3);
+}
+
+// auto-fit rather than a fixed column count, so the same grid works from a
+// phone to a wide desktop without a breakpoint per size.
+.lhc-cv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px 22px;
+}
+
+.lhc-cv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+
+    &.lhc-wide { grid-column: 1 / -1; }
+
+    > label {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgba(17, 27, 48, .5);
+    }
+}
+
+.lhc-cv-value {
+    font-size: 14.5px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(17, 27, 48, .07);
+    overflow-wrap: anywhere;
+}
+
+.lhc-cv-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(17, 27, 48, .18);
+    border-radius: 7px;
+    background: #fff;
+    font: inherit;
+    font-size: 14px;
+    color: var(--lhc-ink, #111B30);
+
+    &:focus {
+        outline: none;
+        border-color: var(--lhc-gold, #B7905B);
+        box-shadow: 0 0 0 3px rgba(183, 144, 91, .15);
+    }
+}
+
+textarea.lhc-cv-input { resize: vertical; }
+
+.lhc-cv-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+
+    input { width: 16px; height: 16px; accent-color: var(--lhc-gold, #B7905B); }
+}
+
+// ---- States --------------------------------------------------------------
+.lhc-cv-loading,
+.lhc-cv-empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: rgba(17, 27, 48, .5);
+    font-size: 14px;
+    background: #fff;
+    border: 1px solid rgba(17, 27, 48, .1);
+    border-radius: 10px;
+}
+
+.lhc-cv-empty-mark {
+    font-size: 30px;
+    opacity: .3;
+    margin-bottom: 8px;
+}
+
+.lhc-cv-error {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 13px 16px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(148, 51, 31, .3);
+    border-left: 3px solid #94331f;
+    border-radius: 7px;
+    background: #fdf2ef;
+    color: #7d2b19;
+    font-size: 13.5px;
+}
+
+// ---- Phone ---------------------------------------------------------------
+// The table becomes stacked cards: a 7-column table on a 360px screen is
+// unreadable however it scrolls.
+@media (max-width: 700px) {
+    .lhc-cv-table {
+        thead { display: none; }
+
+        tbody tr {
+            display: block;
+            padding: 10px 4px;
+            border-bottom: 1px solid rgba(17, 27, 48, .08);
+        }
+
+        td {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 5px 14px;
+            border: none;
+            text-align: right;
+
+            // The header is gone, so each cell carries its own label.
+            &::before {
+                content: attr(data-label);
+                flex: none;
+                font-size: 10.5px;
+                font-weight: 700;
+                letter-spacing: .07em;
+                text-transform: uppercase;
+                color: rgba(17, 27, 48, .45);
+                text-align: left;
+                padding-top: 2px;
+            }
+        }
+    }
+
+    .lhc-cv-card { padding: 16px; }
+    .lhc-cv-head { gap: 12px; }
+    .lhc-cv-actions { width: 100%; }
+    .lhc-cv-actions .lhc-btn { flex: 1; justify-content: center; }
+}

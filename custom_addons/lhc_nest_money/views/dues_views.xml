@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Due / Pending Rent. Split out of the old dashboard_views.xml because it is
+     a Money screen, not a report: it lists receipts that came up short. -->
+<odoo>
+    <record id="action_lhc_dues" model="ir.actions.act_window">
+        <field name="name">Due / Pending Rent</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('partial','=',True),('state','=','approved')]</field>
+    </record>
+</odoo>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_unit_list" model="ir.ui.view">
+        <field name="name">lhc.unit.list</field>
+        <field name="model">lhc.unit</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="property_id"/>
+                <field name="unit_type"/>
+                <field name="area_sqft"/>
+                <field name="own_eb_no"/>
+                <field name="status" widget="badge"
+                       decoration-success="status=='occupied'"
+                       decoration-warning="status=='notice'"
+                       decoration-info="status=='booked'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_unit_form" model="ir.ui.view">
+        <field name="name">lhc.unit.form</field>
+        <field name="model">lhc.unit</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="code"/>
+                        <h1><field name="code" placeholder="Unit Code"/></h1>
+                    </div>
+                    <group>
+                        <group string="Unit Identity">
+                            <field name="property_id"/>
+                            <field name="unit_type"/>
+                            <field name="area_sqft"/>
+                            <field name="own_eb_no"/>
+                            <field name="status"/>
+                        </group>
+                        <group string="Premises (for agreement)">
+                            <field name="door_no"/>
+                            <field name="super_builtup_area"/>
+                            <field name="boundaries"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Fixtures (auto-pulled from Fixture Purchases)">
+                            <field name="fixture_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="purchase_date"/>
+                                    <field name="cost_before_gst"/>
+                                    <field name="move_in_condition"/>
+                                    <field name="gst_bill"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_unit" model="ir.actions.act_window">
+        <field name="name">Units</field>
+        <field name="res_model">lhc.unit</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+
+    <record id="view_lhc_unit_kanban" model="ir.ui.view">
+        <field name="name">lhc.unit.kanban.lhc</field>
+        <field name="model">lhc.unit</field>
+        <field name="arch" type="xml">
+            <!-- Deliberately ungrouped. Odoo lays a grouped kanban out as
+                 side-by-side columns, which fights the mockup's wall-of-units
+                 grid. Per-property grouping already lives on the Properties &
+                 Units screen; this menu is the flat occupancy view, and the
+                 search view still offers Group By > Property on demand. -->
+            <kanban class="lhc-unit-grid" records_draggable="0">
+                <field name="status"/>
+                <field name="code"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="lhc-u-{{ record.status.raw_value }}">
+                            <span class="lhc-unit-code" t-esc="record.code.value"/>
+                            <!-- Occupancy label. Without leasing installed this is
+                                 just the status; lhc_nest_leasing swaps in the
+                                 current tenant's name where there is one. -->
+                            <span class="lhc-unit-sub">
+                                <field name="status"/>
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_wa_template_admin,wa.template.admin,model_lhc_wa_template,lhc_nest.group_lhc_admin,1,1,1,1
+access_wa_template_acct,wa.template.acct,model_lhc_wa_template,lhc_nest.group_lhc_accountant,1,1,1,0
+access_document_admin,document.admin,model_lhc_document,lhc_nest.group_lhc_admin,1,1,1,1
+access_document_accountant,document.accountant,model_lhc_document,lhc_nest.group_lhc_accountant,1,1,1,0

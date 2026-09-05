@@ -1,0 +1,73 @@
+// ===========================================================================
+// LHC NEST — Odoo / Bootstrap SCSS variable overrides
+//
+// This file is PREPENDED to web._assets_primary_variables, immediately after
+// _lhc_tokens.scss. The assignments below therefore land before Odoo's and
+// Bootstrap's own `!default` declarations and win outright.
+//
+// That is the whole point of putting them here: every backend stylesheet then
+// compiles against the brand, instead of the brand being re-asserted selector
+// by selector afterwards. Anything that CAN be set here should be, because a
+// variable reaches code this addon has never seen.
+//
+// SCSS VARIABLES ONLY — no CSS rules. This bundle is inlined into several
+// others, and a rule here would be emitted once per bundle.
+// ===========================================================================
+
+// ---- Brand ---------------------------------------------------------------
+// GOLD IS PRIMARY, navy is secondary — the frozen brand order.
+//
+// This single line is what makes every `.btn-primary` in Odoo gold, including
+// the hundreds of buttons in code this addon has never seen. Navy stays the
+// chrome: the rail, the app bar, dialog lids, headings — and the text that
+// sits ON the gold, because white on #B7905B is 2.94:1 and navy is 5.85:1.
+$o-brand-odoo:            $lhc-navy;     // chrome, headings, table headers
+$o-brand-primary:         $lhc-gold;     // primary buttons / active affordances
+$o-brand-secondary:       $lhc-navy;     // the supporting colour
+
+// ---- Text ----------------------------------------------------------------
+$o-main-text-color:       $lhc-text;
+$o-main-headings-color:   $lhc-navy;
+$o-main-link-color:       $lhc-steel;
+
+// ---- Typography ----------------------------------------------------------
+// Inter is the brand face. The stack degrades to the platform UI font (San
+// Francisco / Segoe UI / Roboto), which is metrically close enough that a
+// failed webfont load is a change of texture, not of layout.
+$o-font-family-sans-serif: $lhc-font-sans;
+$o-font-family-monospace:  $lhc-font-mono;
+
+// The design scales from a 14px root.
+$o-font-size-base:         0.875rem;   // 14px
+$o-font-size-base-small:   0.8125rem;  // 13px
+$o-font-size-base-smaller: 0.75rem;    // 12px
+
+// Headings are 650 rather than 700 — a touch lighter, so the near-black navy
+// does not read as heavy at large sizes.
+$o-font-weight-medium: 500;
+$o-font-weight-bold:   650;
+
+// ---- Shape ---------------------------------------------------------------
+// Bootstrap's own radii, so a control this addon never names still lands on
+// the same box as one it does.
+$border-radius:    $lhc-radius;
+$border-radius-sm: $lhc-radius-sm;
+$border-radius-lg: $lhc-radius-lg;
+$border-color:     $lhc-border;
+
+// ---- Controls ------------------------------------------------------------
+// Data entry here is heavy, so every input shows its box. $lhc-input-border
+// rather than $lhc-border: a table rule may be a hairline, but the edge of a
+// control is the only thing telling a user where the control is, and WCAG
+// 1.4.11 wants 3:1 for that.
+$input-border-color:       $lhc-input-border;
+$input-focus-border-color: $lhc-navy;
+$input-btn-focus-color:    rgba(17, 27, 48, .22);
+$input-padding-y:          8px;
+$input-padding-x:          11px;
+
+// ---- Chrome --------------------------------------------------------------
+$modal-content-border-radius: $lhc-radius-lg;
+$modal-backdrop-opacity:      .45;
+$dropdown-border-radius:      $lhc-radius;
+$dropdown-border-color:       $lhc-border;

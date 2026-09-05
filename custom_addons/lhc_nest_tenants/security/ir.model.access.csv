@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tenant_admin,tenant.admin,model_lhc_tenant,lhc_nest.group_lhc_admin,1,1,1,1
+access_tenant_acct,tenant.acct,model_lhc_tenant,lhc_nest.group_lhc_accountant,1,1,1,0

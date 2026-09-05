@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Record rules for this addon's models.
+
+      noupdate="0" for the same reason as lhc_groups.xml: a rule is the
+      security model, and a fix to one has to reach existing databases.
+
+      global="True" means the rule is ANDed with every other rule regardless of
+      group, so no group membership can widen it. Each model's company scoping
+      ships with the model rather than in one project-wide file, so removing an
+      addon removes exactly its own rules.
+    -->
+    <data noupdate="0">
+
+        <!-- ==========================================================
+             BILLING ENTITIES
+             ========================================================== -->
+
+        <!-- Multi-company: an entity belongs to the company that owns it.
+             Global, so it ANDs with the ACL grant in ir.model.access.csv. -->
+        <record id="rule_lhc_billing_entity_company" model="ir.rule">
+            <field name="name">Billing Entity: multi-company</field>
+            <field name="model_id" ref="model_lhc_billing_entity"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+    </data>
+</odoo>

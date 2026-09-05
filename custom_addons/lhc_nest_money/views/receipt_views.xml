@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_receipt_list" model="ir.ui.view">
+        <field name="name">lhc.receipt.list</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="state=='pending'" decoration-success="state=='approved'"
+                  decoration-muted="state in ('rejected','cancelled')">
+                <field name="name"/>
+                <field name="receipt_date"/>
+                <field name="tenant_id"/>
+                <field name="unit_id"/>
+                <field name="billing_entity_id"/>
+                <field name="rent_amount"/>
+                <field name="gst_amount"/>
+                <field name="total_invoice"/>
+                <field name="amount_received_bank"/>
+                <field name="partial" widget="boolean_toggle"/>
+                <field name="wrong_bank_flag"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_receipt_form" model="ir.ui.view">
+        <field name="name">lhc.receipt.form</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit for Approval"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="lhc_nest.group_lhc_accountant"/>
+                    <button name="action_approve" type="object" string="✅ Approve"
+                            class="btn-success" invisible="state != 'pending'"
+                            groups="lhc_nest.group_lhc_admin"/>
+                    <button name="action_reject" type="object" string="✗ Reject"
+                            class="btn-danger" invisible="state != 'pending'"
+                            groups="lhc_nest.group_lhc_admin"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state in ('cancelled','rejected')"/>
+                    <button name="%(action_report_lhc_receipt)d" type="action"
+                            string="🖨️ Print Receipt" class="btn-secondary"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,pending,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Tenant">
+                            <field name="agreement_id"/>
+                            <field name="tenant_id"/>
+                            <field name="unit_id"/>
+                            <field name="billing_entity_id"/>
+                            <field name="receipt_type"/>
+                        </group>
+                        <group string="Payment">
+                            <field name="receipt_date"/>
+                            <field name="period"/>
+                            <field name="payment_mode"/>
+                            <field name="bank_label"/>
+                            <field name="other_bank"/>
+                            <field name="other_bank_reason" invisible="not other_bank"
+                                   required="other_bank"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Amounts (separate line items)">
+                            <field name="rent_amount"/>
+                            <field name="gst_applicable"/>
+                            <field name="gst_amount"/>
+                            <field name="maintenance_amount"/>
+                            <field name="total_invoice"/>
+                        </group>
+                        <group string="TDS (per receipt — spec 5.11)">
+                            <field name="tds_applicable"/>
+                            <field name="tds_amount" invisible="not tds_applicable"/>
+                            <field name="tds_challan" invisible="not tds_applicable"/>
+                            <field name="amount_received_bank"/>
+                            <field name="partial"/>
+                            <field name="shortfall" invisible="not partial"/>
+                        </group>
+                    </group>
+                    <group string="Bundle pending tenant-payable maintenance for this unit">
+                        <field name="maintenance_ids" nolabel="1" widget="many2many"
+                               context="{'default_unit_id': unit_id}">
+                            <list>
+                                <field name="date"/>
+                                <field name="expense_type"/>
+                                <field name="amount"/>
+                                <field name="recovery_status"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group>
+                        <field name="posted_by" readonly="1"/>
+                        <field name="approved_by" readonly="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_receipt" model="ir.actions.act_window">
+        <field name="name">Post Receipt</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_lhc_approval_queue" model="ir.actions.act_window">
+        <field name="name">Receipt Approvals</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('state','=','pending')]</field>
+    </record>
+
+    <!-- Tenant Ledger -->
+    <record id="view_lhc_ledger_list" model="ir.ui.view">
+        <field name="name">lhc.ledger.entry.list</field>
+        <field name="model">lhc.ledger.entry</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="tenant_id"/>
+                <field name="unit_id"/>
+                <field name="entry_type"/>
+                <field name="description"/>
+                <field name="receipt_no"/>
+                <field name="debit" sum="Debit"/>
+                <field name="credit" sum="Credit"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lhc_ledger" model="ir.actions.act_window">
+        <field name="name">Tenant Ledger</field>
+        <field name="res_model">lhc.ledger.entry</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_lhc_receipt_kanban" model="ir.ui.view">
+        <field name="name">lhc.receipt.kanban.lhc</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <kanban class="lhc-approval-grid" records_draggable="0" create="false">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="{{ record.state.raw_value == 'approved' ? 'lhc-approved' : '' }} {{ record.state.raw_value == 'rejected' ? 'lhc-rejected' : '' }}">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="lhc-card-title">
+                                        <field name="tenant_id"/> —
+                                        <field name="unit_id"/>
+                                    </div>
+                                    <div class="lhc-card-sub">
+                                        <field name="total_invoice" widget="monetary"/>
+                                        ·
+                                        <field name="payment_mode"/>
+                                        ·
+                                        <field name="period"/>
+                                    </div>
+                                    <div class="lhc-card-sub">
+                                        Posted by <field name="posted_by"/>
+                                        on <field name="receipt_date"/>
+                                    </div>
+                                </div>
+                                <field name="state" widget="badge"
+                                       decoration-warning="state == 'pending'"
+                                       decoration-success="state == 'approved'"
+                                       decoration-danger="state == 'rejected'"
+                                       decoration-muted="state in ('draft','cancelled')"/>
+                            </div>
+                            <div class="lhc-approval-actions" t-if="record.state.raw_value == 'pending'">
+                                <button name="action_approve" type="object"
+                                        class="btn btn-sm btn-success"
+                                        groups="lhc_nest.group_lhc_admin">
+                                    Approve
+                                </button>
+                                <button name="action_reject" type="object"
+                                        class="btn btn-sm btn-danger"
+                                        groups="lhc_nest.group_lhc_admin">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>

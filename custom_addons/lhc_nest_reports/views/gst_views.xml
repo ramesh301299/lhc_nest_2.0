@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GST Payments (remittance) -->
+    <record id="view_lhc_gst_payment_list" model="ir.ui.view">
+        <field name="name">lhc.gst.payment.list</field>
+        <field name="model">lhc.gst.payment</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="payment_date"/>
+                <field name="entity_id"/>
+                <field name="period"/>
+                <field name="amount" sum="Remitted"/>
+                <field name="challan"/>
+                <field name="entered_by"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_gst_payment_form" model="ir.ui.view">
+        <field name="name">lhc.gst.payment.form</field>
+        <field name="model">lhc.gst.payment</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="entity_id"/>
+                            <field name="period"/>
+                            <field name="payment_date"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="challan"/>
+                            <field name="proof" filename="proof_filename"/>
+                            <field name="proof_filename" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_gst_payment" model="ir.actions.act_window">
+        <field name="name">GST Paid to Government</field>
+        <field name="res_model">lhc.gst.payment</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Auditor Fees -->
+    <record id="view_lhc_auditor_fee_list" model="ir.ui.view">
+        <field name="name">lhc.auditor.fee.list</field>
+        <field name="model">lhc.auditor.fee</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="date"/>
+                <field name="amount" sum="Total"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lhc_auditor_fee" model="ir.actions.act_window">
+        <field name="name">Auditor Fees</field>
+        <field name="res_model">lhc.auditor.fee</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- GST / Non-GST Summary — receipts pivot by entity -->
+    <record id="view_lhc_receipt_pivot" model="ir.ui.view">
+        <field name="name">lhc.receipt.pivot</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <pivot string="GST / Non-GST Summary">
+                <field name="billing_entity_id" type="row"/>
+                <field name="rent_amount" type="measure"/>
+                <field name="gst_amount" type="measure"/>
+                <field name="total_invoice" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_lhc_gst_summary" model="ir.actions.act_window">
+        <field name="name">GST / Non-GST Summary</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="domain">[('state','=','approved')]</field>
+        <field name="view_id" ref="view_lhc_receipt_pivot"/>
+    </record>
+
+    <!-- TDS Credit Tracker (spec 5.11) -->
+    <record id="view_lhc_tds_list" model="ir.ui.view">
+        <field name="name">lhc.receipt.tds.list</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="receipt_date"/>
+                <field name="tenant_id"/>
+                <field name="name"/>
+                <field name="tds_amount" sum="TDS"/>
+                <field name="tds_challan"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lhc_tds_tracker" model="ir.actions.act_window">
+        <field name="name">TDS Credit Tracker</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('tds_applicable','=',True)]</field>
+        <field name="view_id" ref="view_lhc_tds_list"/>
+    </record>
+
+    <!-- Bank-wise Collection: receipts grouped by bank, wrong-bank flagged -->
+    <record id="view_lhc_bank_collection_list" model="ir.ui.view">
+        <field name="name">lhc.receipt.bank.list</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="wrong_bank_flag==True">
+                <field name="name"/>
+                <field name="tenant_id"/>
+                <field name="amount_received_bank" sum="Received"/>
+                <field name="bank_label"/>
+                <field name="wrong_bank_flag"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lhc_bank_collection" model="ir.actions.act_window">
+        <field name="name">Bank-wise Collection</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('state','=','approved')]</field>
+        <field name="view_id" ref="view_lhc_bank_collection_list"/>
+    </record>
+</odoo>

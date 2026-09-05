@@ -1,0 +1,809 @@
+// ===========================================================================
+// LHC NEST — buttons, inputs, search and the control panel.
+//
+// Deliberately NOT scoped to `body.lhc-shell`. A button is a button on every
+// screen the user can reach from the rail, and the "Odoo Menus" door leads to
+// several of them. Scoping this sheet is what used to make stepping into
+// Contacts feel like leaving the product.
+//
+// ---------------------------------------------------------------------------
+// The two-colour rule, and it is the whole button system:
+//
+//   PRIMARY   = navy. The one action you most likely came to take — Save,
+//               Create, Approve. Structure and commitment.
+//   SECONDARY = gold. The important action beside it — Import beside Add,
+//               Discard beside Save. Emphasis, and deliberately second.
+//
+// Gold carries NAVY text, never white: #B7905B is 2.94:1 under white and
+// 5.85:1 under navy. Every gold control in this system therefore has dark
+// text on it, and --app-on-accent is the single place that decision lives.
+// ===========================================================================
+
+// ---- The shared button shape ---------------------------------------------
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-radius: var(--lhc-radius-btn, 8px);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 14px;
+    line-height: 1.25;
+    white-space: nowrap;
+    transition: background-color var(--lhc-fast) var(--lhc-ease),
+                border-color var(--lhc-fast) var(--lhc-ease),
+                color var(--lhc-fast) var(--lhc-ease),
+                box-shadow var(--lhc-fast) var(--lhc-ease);
+
+    > i { font-size: 12px; }
+
+    &:focus-visible {
+        box-shadow: var(--lhc-focus-ring);
+        outline: 0;
+    }
+}
+
+// Odoo puts icon-only buttons in toolbars and list rows; inline-flex plus a gap
+// would leave a phantom 7px on those, so the gap stands down when there is
+// nothing beside the glyph.
+.btn:has(> i:only-child) { gap: 0; }
+
+// The statusbar's stage chevrons are `.btn` but are drawn out of clip-path
+// polygons by Odoo's own stylesheet. Re-laying them out as flex boxes would
+// cut the chevron shape off; they keep Odoo's geometry and only take colour
+// from this theme (see form.scss).
+.o_arrow_button.btn {
+    display: inline-block;
+    gap: 0;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+// ---- Primary: navy -------------------------------------------------------
+// Both the declarations and the Bootstrap 5 `--btn-*` custom properties are
+// set. The declarations win where both apply, but leaving the variables on
+// Odoo's default means anything that reads them directly — a disabled state, a
+// nested control, a button group — quietly reverts to Odoo purple.
+.btn-primary {
+    --btn-bg: var(--app-primary);
+    --btn-border-color: var(--app-primary);
+    --btn-color: var(--app-on-primary);
+    --btn-hover-bg: var(--app-primary-hover);
+    --btn-hover-border-color: var(--app-primary-hover);
+    --btn-hover-color: var(--app-on-primary);
+    --btn-active-bg: var(--app-primary-active);
+    --btn-active-border-color: var(--app-primary-active);
+    --btn-active-color: var(--app-on-primary);
+    // Otherwise the focus glow stays whatever Bootstrap derived from its own
+    // primary, which is how a themed button ends up ringed in Odoo purple.
+    --btn-focus-shadow-rgb: var(--app-primary-rgb);
+    --btn-disabled-bg: var(--app-primary);
+    --btn-disabled-border-color: var(--app-primary);
+    --btn-disabled-color: var(--app-on-primary);
+
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+    color: var(--app-on-primary);
+
+    &:hover, &:focus, &:active, &.active {
+        background-color: var(--app-primary-hover);
+        border-color: var(--app-primary-hover);
+        color: var(--app-on-primary);
+    }
+
+    &:disabled, &.disabled { opacity: .55; }
+}
+
+// ---- Secondary: gold -----------------------------------------------------
+// The second half of a two-button pair. Ink on gold, never white.
+.btn-secondary,
+.btn-accent {
+    --btn-bg: var(--app-accent);
+    --btn-border-color: var(--app-accent);
+    --btn-color: var(--app-on-accent);
+    --btn-hover-bg: var(--app-accent-hover);
+    --btn-hover-border-color: var(--app-accent-hover);
+    --btn-hover-color: var(--app-on-accent);
+    --btn-active-bg: var(--app-accent-active);
+    --btn-active-border-color: var(--app-accent-active);
+    --btn-active-color: var(--app-on-accent);
+    --btn-focus-shadow-rgb: var(--app-accent-rgb);
+    --btn-disabled-bg: var(--app-accent);
+    --btn-disabled-border-color: var(--app-accent);
+    --btn-disabled-color: var(--app-on-accent);
+
+    background-color: var(--app-accent);
+    border-color: var(--app-accent);
+    color: var(--app-on-accent);
+
+    &:hover, &:focus, &:active, &.active {
+        background-color: var(--app-accent-hover);
+        border-color: var(--app-accent-hover);
+        color: var(--app-on-accent);
+    }
+
+    &:disabled, &.disabled { opacity: .55; }
+}
+
+// The exception, and it is chrome rather than an action.
+//
+// Odoo builds the pager's previous/next arrows, the view switcher and several
+// toolbar toggles out of `.btn-secondary`. They are not the second half of a
+// pair — they are navigation, they appear on every list and form in the
+// system, and gold on them would put the accent permanently in the corner of
+// every screen. That is exactly the failure a rationed accent exists to avoid,
+// arrived at by the back door.
+.o_pager .btn-secondary,
+.o_cp_switch_buttons .btn-secondary,
+.o_view_scale_selector .btn-secondary,
+.o_optional_columns_dropdown .btn-secondary,
+.o_cp_action_menus .btn-secondary {
+    --btn-bg: transparent;
+    --btn-border-color: transparent;
+    --btn-color: var(--lhc-muted);
+    --btn-hover-bg: var(--lhc-border-2);
+    --btn-hover-border-color: var(--lhc-border-2);
+    --btn-hover-color: var(--lhc-ink);
+    --btn-active-bg: var(--lhc-border-2);
+    --btn-active-border-color: var(--lhc-border-2);
+    --btn-active-color: var(--lhc-ink);
+    --btn-disabled-bg: transparent;
+    --btn-disabled-border-color: transparent;
+    --btn-disabled-color: var(--lhc-muted);
+
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--lhc-muted);
+
+    &:hover, &:focus, &:active, &.active {
+        background-color: var(--lhc-border-2);
+        border-color: var(--lhc-border-2);
+        color: var(--lhc-ink);
+    }
+}
+
+// ---- Ghost: the neutral, most common button on a dense screen ------------
+.btn-light,
+.btn-outline-secondary,
+.btn-outline-primary {
+    --btn-bg: var(--lhc-surface);
+    --btn-border-color: var(--lhc-border);
+    --btn-color: var(--lhc-ink);
+    --btn-hover-bg: var(--lhc-bg);
+    --btn-hover-border-color: var(--lhc-navy-border);
+    --btn-hover-color: var(--lhc-ink);
+    --btn-active-bg: var(--lhc-bg);
+    --btn-active-border-color: var(--lhc-border);
+    --btn-active-color: var(--lhc-ink);
+    --btn-focus-shadow-rgb: var(--app-primary-rgb);
+
+    background-color: var(--lhc-surface);
+    border-color: var(--lhc-border);
+    color: var(--lhc-ink);
+
+    &:hover, &:focus, &:active {
+        background-color: var(--lhc-bg);
+        border-color: var(--lhc-navy-border);
+        color: var(--lhc-ink);
+    }
+}
+
+// ---- Semantic actions ----------------------------------------------------
+// The darker ink green as the FILL, not the base: white on #2e7d52 is 4.62:1
+// and clears AA, which the lighter greens a status dot uses do not.
+.btn-success {
+    --btn-bg: var(--lhc-green-ink);
+    --btn-border-color: var(--lhc-green-ink);
+    --btn-color: #fff;
+    --btn-hover-bg: #164a30;
+    --btn-hover-border-color: #164a30;
+    --btn-hover-color: #fff;
+
+    background-color: var(--lhc-green-ink);
+    border-color: var(--lhc-green-ink);
+    color: #fff;
+
+    &:hover, &:focus, &:active {
+        background-color: #164a30;
+        border-color: #164a30;
+        color: #fff;
+    }
+}
+
+// Amber sits between: needs attention, not yet wrong.
+.btn-warning {
+    --btn-bg: var(--lhc-amber);
+    --btn-border-color: var(--lhc-amber);
+    --btn-color: #fff;
+    --btn-hover-bg: var(--lhc-amber-ink);
+    --btn-hover-border-color: var(--lhc-amber-ink);
+    --btn-hover-color: #fff;
+
+    background-color: var(--lhc-amber);
+    border-color: var(--lhc-amber);
+    color: #fff;
+
+    &:hover, &:focus, &:active {
+        background-color: var(--lhc-amber-ink);
+        border-color: var(--lhc-amber-ink);
+        color: #fff;
+    }
+}
+
+.btn-danger {
+    --btn-bg: var(--lhc-red);
+    --btn-border-color: var(--lhc-red);
+    --btn-color: #fff;
+    --btn-hover-bg: var(--lhc-red-ink);
+    --btn-hover-border-color: var(--lhc-red-ink);
+    --btn-hover-color: #fff;
+
+    background-color: var(--lhc-red);
+    border-color: var(--lhc-red);
+    color: #fff;
+
+    &:hover, &:focus, &:active {
+        background-color: var(--lhc-red-ink);
+        border-color: var(--lhc-red-ink);
+        color: #fff;
+    }
+}
+
+// Destructive, said once rather than shouted: red text always, red ground only
+// under the pointer.
+.btn-outline-danger {
+    background-color: var(--lhc-surface);
+    border-color: var(--lhc-border);
+    color: var(--lhc-red-ink);
+
+    &:hover, &:focus, &:active {
+        background-color: var(--lhc-red-pale);
+        border-color: var(--lhc-red-ink);
+        color: var(--lhc-red-ink);
+    }
+}
+
+.btn-link {
+    color: var(--lhc-steel);
+    font-weight: 600;
+
+    &:hover { color: var(--lhc-steel-dark); }
+}
+
+// Odoo's "fill" variants take their colours from $o-action rather than from
+// $primary, so they keep Odoo's default unless pinned here.
+.btn-fill-primary {
+    --btn-bg: var(--app-primary);
+    --btn-border-color: var(--app-primary);
+    --btn-color: var(--app-on-primary);
+    --btn-hover-bg: var(--app-primary-hover);
+    --btn-hover-border-color: var(--app-primary-hover);
+    --btn-active-bg: var(--app-primary-active);
+    --btn-active-border-color: var(--app-primary-active);
+    --btn-disabled-bg: var(--app-primary);
+    --btn-disabled-border-color: var(--app-primary);
+}
+
+.btn-fill-secondary {
+    --btn-bg: var(--app-accent);
+    --btn-border-color: var(--app-accent);
+    --btn-color: var(--app-on-accent);
+    --btn-hover-bg: var(--app-accent-hover);
+    --btn-hover-border-color: var(--app-accent-hover);
+    --btn-active-bg: var(--app-accent-active);
+    --btn-active-border-color: var(--app-accent-active);
+}
+
+// ===========================================================================
+// Inputs.
+//
+// Stock Odoo inputs are borderless until focus, which reads as "is this even
+// editable?". Data entry here is heavy — rent runs, receipts, agreements — so
+// every input shows its box.
+// ===========================================================================
+.o_field_widget {
+    .o_input,
+    input.o_input,
+    textarea.o_input,
+    select.o_input,
+    .o_input_dropdown > .o_input {
+        // --lhc-input-border, not --lhc-border. A table rule may be a
+        // hairline; the edge of a control is the only thing telling a user
+        // where the control is, and WCAG 1.4.11 wants 3:1 for that.
+        border: 1px solid var(--lhc-input-border);
+        border-radius: var(--lhc-radius);
+        // A WELL, not an outline.
+        //
+        // A form here is thirty fields deep, and thirty identical hard-edged
+        // rectangles on flat white is what made this screen read as a wall of
+        // boxes. Filling each field a half-step below the sheet and sinking it
+        // with a hairline inset shadow lets the eye find the writable area
+        // from the surface rather than from the border alone — so the border
+        // itself can stop shouting.
+        //
+        // The border colour is unchanged at 3.50:1: WCAG 1.4.11 wants 3:1 for
+        // a control boundary, and a fill this subtle cannot carry that on its
+        // own. The fill is what makes it feel lighter; the border is what
+        // keeps it legible.
+        background-color: var(--lhc-gray-50);
+        box-shadow: inset 0 1px 2px rgba(17, 27, 48, .05);
+        padding: 9px 12px;
+        font-size: 13px;
+        color: var(--lhc-ink);
+        transition: border-color var(--lhc-fast) var(--lhc-ease),
+                    background-color var(--lhc-fast) var(--lhc-ease),
+                    box-shadow var(--lhc-fast) var(--lhc-ease);
+
+        &::placeholder { color: var(--lhc-icon-quiet); }
+
+        &:hover:not(:disabled):not([readonly]) {
+            border-color: var(--lhc-navy-light);
+            background-color: var(--lhc-surface);
+        }
+
+        // Focus lifts the field to white and drops the inset, so the one you
+        // are typing in is the only lit field on the sheet.
+        &:focus {
+            border-color: var(--lhc-navy);
+            background-color: var(--lhc-surface);
+            box-shadow: var(--lhc-focus-ring);
+            outline: 0;
+        }
+    }
+
+    &.o_field_invalid .o_input {
+        border-color: var(--lhc-red);
+        box-shadow: 0 0 0 3px rgba(184, 50, 50, .18);
+    }
+}
+
+// Tick boxes and radios follow the brand rather than Bootstrap blue.
+.form-check-input:checked {
+    background-color: var(--lhc-navy);
+    border-color: var(--lhc-navy);
+}
+
+.form-check-input:focus-visible {
+    box-shadow: var(--lhc-focus-ring);
+    border-color: var(--lhc-navy);
+}
+
+// Odoo's boolean toggle.
+.o_field_boolean_toggle .form-check-input:checked {
+    background-color: var(--lhc-green);
+    border-color: var(--lhc-green);
+}
+
+// ===========================================================================
+// Control panel: breadcrumbs, view switcher, search bar, dropdowns, pager.
+//
+// The most-seen strip in Odoo, and stock it is cramped. This gives it
+// breathing room and a clear hierarchy: the record title is the loudest thing
+// on the row, the trail behind it is muted, and the controls on the right
+// recede until they are wanted.
+// ===========================================================================
+.o_control_panel {
+
+    // ---- Breadcrumbs -----------------------------------------------------
+    .o_breadcrumb {
+        .o_last_breadcrumb_item {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -.2px;
+            color: var(--lhc-ink);
+            line-height: 1.3;
+        }
+
+        .breadcrumb-item,
+        .o_back_button {
+            font-size: 12px;
+            color: var(--lhc-muted);
+            transition: color var(--lhc-fast) var(--lhc-ease);
+
+            &:hover { color: var(--lhc-navy); }
+        }
+    }
+
+    // ---- Search bar ------------------------------------------------------
+    // ONE box, not two.
+    //
+    // Odoo nests these. `.o_cp_searchview` is an `input-group` and it wraps
+    // `.o_searchview`, which carries Bootstrap's `form-control` and therefore
+    // arrives with a border, a ground and a focus ring of its own. Framing
+    // both — which is what this rule used to do — drew a bordered box inside a
+    // bordered box, with the dropdown toggle stranded outside the inner one.
+    // That is the doubled wrapper around the search field.
+    //
+    // The frame belongs to the OUTER element, because that is the one that
+    // also contains the toggle. The inner element gives up every box property
+    // it owns and becomes a plain row inside the frame.
+    .o_cp_searchview {
+        border: 1px solid var(--lhc-border);
+        border-radius: var(--lhc-radius);
+        background-color: var(--lhc-bg);
+        padding: 2px 8px;
+        box-shadow: none;
+        transition: border-color var(--lhc-fast) var(--lhc-ease),
+                    background-color var(--lhc-fast) var(--lhc-ease),
+                    box-shadow var(--lhc-fast) var(--lhc-ease);
+
+        &:focus-within {
+            border-color: var(--lhc-navy);
+            background-color: var(--lhc-surface);
+            box-shadow: var(--lhc-focus-ring);
+        }
+
+        // The inner element: no frame of its own, and no second focus ring
+        // firing inside the one the wrapper already draws.
+        .o_searchview {
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+            min-height: 0;
+            height: auto;
+
+            &:focus,
+            &:focus-within,
+            &.focus {
+                border: 0;
+                box-shadow: none;
+                outline: 0;
+            }
+        }
+
+        // The filter / group-by caret is part of the field, not a button
+        // parked against it. `input-group` would otherwise give it its own
+        // border and ground and split the control in two.
+        > .btn,
+        > .dropdown > .btn,
+        .o_searchview_dropdown_toggler {
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            color: var(--lhc-icon-quiet);
+
+            &:hover,
+            &:focus {
+                background: transparent;
+                color: var(--lhc-navy);
+            }
+        }
+
+        .o_searchview_input {
+            font-size: 13px;
+            background: transparent;
+        }
+
+        .o_searchview_icon { color: var(--lhc-icon-quiet); }
+
+        // ---- Applied-filter chips ----------------------------------------
+        // These sit INSIDE the search field, which sits on the navy bar, and
+        // every colour here was originally picked for the white bar that bar
+        // replaced. The result was the label chip's pale ground (#e9eaee)
+        // still winning while the text had gone white: **1.20:1** — the text
+        // was there and simply could not be read.
+        //
+        // SOLID colours, not translucent ones, and that is the point. A
+        // translucent chip takes its contrast from whatever happens to be
+        // behind it, which is exactly how the two half-applied rules produced
+        // an unreadable result. These two pairs are fixed and measured:
+        //   label  navy on gold      5.85:1
+        //   values white on #374051 10.54:1
+        .o_searchview_facet {
+            // A gold outline around the whole chip, so an applied filter is
+            // legible as one object rather than as a gold square that happens
+            // to sit next to a dark one. The border wraps the label and the
+            // value together; `overflow: hidden` clips both to the radius, so
+            // the gold label meets the outline seamlessly on its side.
+            border: 1px solid var(--lhc-gold);
+            border-radius: var(--lhc-radius-sm);
+            overflow: hidden;
+
+            // The field name — "Units", "Status". Gold, so an active filter is
+            // visibly ON without needing a second signal.
+            .o_searchview_facet_label {
+                background-color: var(--lhc-gold);
+                color: var(--lhc-navy);
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: .3px;
+            }
+
+            // The value(s). #374051 is white-at-16% resolved against the bar's
+            // navy and then frozen, so it cannot be undermined by whatever it
+            // is drawn over.
+            .o_facet_values {
+                background-color: #374051;
+                color: #fff;
+                font-size: 11.5px;
+                font-weight: 600;
+            }
+
+            // The chip's own remove control, and the field's clear-all.
+            .o_facet_remove,
+            .o_searchview_facet_remove {
+                color: rgba(255, 255, 255, .75);
+
+                &:hover { color: #fff; }
+            }
+        }
+    }
+
+    // ---- View switcher ---------------------------------------------------
+    .o_cp_switch_buttons {
+        gap: 2px;
+
+        .btn {
+            color: var(--lhc-muted);
+            border-radius: var(--lhc-radius-sm);
+            border: 1px solid transparent;
+
+            &:hover {
+                background-color: var(--lhc-bg);
+                color: var(--lhc-ink);
+            }
+
+            &.active {
+                background-color: var(--lhc-navy-bg);
+                border-color: transparent;
+                color: var(--lhc-navy);
+            }
+        }
+    }
+
+    // ---- Pager -----------------------------------------------------------
+    .o_pager {
+        font-size: 12.5px;
+        color: var(--lhc-muted);
+        font-variant-numeric: tabular-nums;
+
+        .o_pager_counter .o_pager_value {
+            font-weight: 600;
+            color: var(--lhc-ink);
+        }
+    }
+}
+
+// ---- Dropdown panels -----------------------------------------------------
+// ===========================================================================
+// DROPDOWNS.
+//
+// Filter, Group By, Favourites, the cog menu, the company switcher, the user
+// menu, and — the one that was missing — the autocomplete panel a many2one
+// field opens. That last one is `.o-autocomplete--dropdown-menu`, a class of
+// its own that this group never listed, which is why picking an Agreement
+// dropped a plain white box with a blue link in it onto an otherwise finished
+// screen. One treatment, so a menu is recognisable wherever it came from.
+// ===========================================================================
+.o_search_bar_menu,
+.dropdown-menu,
+.o-dropdown--menu,
+.o-autocomplete--dropdown-menu {
+    border-radius: var(--lhc-radius-lg);
+    border: 1px solid var(--lhc-border);
+    // Two shadows: a tight one that seats the panel against the surface, and a
+    // wide soft one that lifts it. A single blur does one or the other.
+    box-shadow: 0 18px 44px -12px rgba(17, 27, 48, .28),
+                0 2px 6px rgba(17, 27, 48, .10);
+    background: var(--lhc-surface);
+    padding: 6px;
+    overflow: hidden auto;
+    // A long list scrolls inside the panel instead of running off the screen.
+    //
+    // Interpolated so Sass emits the CSS `min()` verbatim. Sass owns `min()`
+    // itself and tries to evaluate it at compile time, where 60vh and 420px
+    // are incompatible units — and that fails the WHOLE bundle, not just this
+    // rule, leaving the backend unstyled. Same trap as the notification width
+    // in states.scss.
+    max-height: #{"min(60vh, 420px)"};
+
+    // Slim, so a scrolling menu does not grow a grey slab down its edge.
+    scrollbar-width: thin;
+    scrollbar-color: rgba(17, 27, 48, .22) transparent;
+
+    .dropdown-item,
+    .o-autocomplete--dropdown-item,
+    .o-autocomplete--dropdown-item > a {
+        position: relative;
+        font-size: 13px;
+        border-radius: var(--lhc-radius-sm);
+        padding: 9px 12px;
+        color: var(--lhc-ink);
+        transition: background-color var(--lhc-fast) var(--lhc-ease),
+                    color var(--lhc-fast) var(--lhc-ease);
+
+        &:hover,
+        &:focus {
+            background-color: var(--lhc-navy-bg);
+            color: var(--lhc-navy);
+        }
+
+        // The keyboard/active row. The gold marker is an INSET SHADOW rather
+        // than a border or a left margin, so highlighting a row cannot shift
+        // its text by a pixel as you arrow down the list.
+        &.selected,
+        &.focus,
+        &.o-navigable:focus,
+        &.ui-state-active {
+            background-color: var(--lhc-gold-bg);
+            color: var(--lhc-navy);
+            font-weight: 600;
+            box-shadow: inset 3px 0 0 var(--lhc-gold);
+        }
+    }
+
+    // Autocomplete wraps each row in an <li>, which would otherwise draw its
+    // own hover behind the rounded item.
+    .o-autocomplete--dropdown-item { padding: 0; background: transparent; }
+
+    .o_dropdown_title,
+    .dropdown-header,
+    .o-autocomplete--dropdown-item.ui-widget-header {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--lhc-muted-2);
+        padding: 10px 12px 5px;
+    }
+
+    .dropdown-divider { border-color: var(--lhc-border-2); margin: 5px 4px; }
+
+    // "Search More…", "Create", "Create and edit…" — the actions at the foot
+    // of a many2one panel. They are not records, so they are separated from
+    // the list and given the readable gold: 4.98:1 on white, where the fill
+    // gold would be 2.94:1 and this is a word.
+    .o_m2o_dropdown_option {
+        margin-top: 4px;
+        border-top: 1px solid var(--lhc-border-2);
+        border-radius: 0 0 var(--lhc-radius-sm) var(--lhc-radius-sm);
+        color: var(--lhc-gold-fg);
+        font-weight: 600;
+
+        &:hover,
+        &:focus {
+            background-color: var(--lhc-gold-bg);
+            color: var(--lhc-navy);
+        }
+    }
+
+    // Nothing in a menu is Bootstrap blue any more.
+    a, .o_menu_item { text-decoration: none; }
+}
+
+// A menu opening should feel instant but not appear out of nowhere.
+.dropdown-menu.show,
+.o-dropdown--menu.show,
+.o-autocomplete--dropdown-menu {
+    animation: lhc-menu-in 120ms var(--lhc-ease);
+}
+
+@keyframes lhc-menu-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-menu.show,
+    .o-dropdown--menu.show,
+    .o-autocomplete--dropdown-menu { animation: none; }
+}
+
+
+// ===========================================================================
+// The back button on a child screen.
+//
+// Rendered by breadcrumb/lhc_back_button.xml, which only injects it when the
+// breadcrumb trail actually has a parent — so this never styles a control that
+// leads nowhere.
+//
+// Quiet, not accented. It appears on every child screen in the product, and
+// gold is reserved for the one thing you are most likely to press on a given
+// screen; a permanently gold arrow in the corner of every form would spend
+// that signal on navigation.
+// ===========================================================================
+// ---- The row: back button, then the record's name ------------------------
+// `.o_breadcrumb` carries Bootstrap's `flex-md-column`, which is compiled with
+// `!important` — so a plain `flex-direction: row` loses and the button, the
+// trail and the title stack in three lines. Matching the `!important` is what
+// puts them on one row.
+.o_breadcrumb:has(> .lhc-back-btn) {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    // NO `gap` here, deliberately — see the button's own `margin-right`.
+    // The spacing used to live on this rule, which only takes effect if the
+    // `:has()` test matches; the button's margin applies unconditionally and
+    // is one less thing that can silently not happen.
+    gap: 0;
+    min-width: 0;
+
+    // The record's name sits beside the button, on one line, and truncates
+    // rather than wrapping the bar to a second row.
+    > .d-flex {
+        min-width: 0;
+        overflow: hidden;
+    }
+}
+
+// Odoo's trail, replaced by the button above.
+.lhc-trail-hidden { display: none !important; }
+
+.lhc-back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    // Auto width now that it carries a word as well as the arrow.
+    width: auto;
+    height: 32px;
+    padding: 0 13px 0 11px;
+    // The space between the button and the record's name.
+    //
+    // On the button rather than as a `gap` on `.o_breadcrumb`: that container
+    // rule is guarded by a `:has()` selector, so the spacing only existed if
+    // that test matched. A margin on the element that needs it always applies,
+    // whatever the parent turns out to be — and the parent here differs between
+    // a root screen and a child screen, which is exactly the kind of thing a
+    // container-side rule gets wrong.
+    margin-right: 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    white-space: nowrap;
+    // GOLD, on the navy bar.
+    //
+    // The LIT gold (#cfad7e), not the base one: on the rail's navy the base
+    // #B7905B reads 5.85:1 while the lit step reads 8.12:1, and this is a
+    // small control carrying a 12.5px word. Gold as the TEXT with a gold-tinted
+    // well behind it — 7.05:1 — rather than a solid gold fill, so it is
+    // unmistakably gold without becoming a second primary button competing
+    // with New two controls along.
+    border: 1px solid rgba(183, 144, 91, .45);
+    border-radius: var(--lhc-radius-sm);
+    background: rgba(183, 144, 91, .10);
+    color: var(--lhc-gold-light);
+    line-height: 1;
+    transition: background-color var(--lhc-fast) var(--lhc-ease),
+                border-color var(--lhc-fast) var(--lhc-ease),
+                color var(--lhc-fast) var(--lhc-ease);
+
+    &:hover {
+        background: rgba(183, 144, 91, .20);
+        border-color: rgba(183, 144, 91, .70);
+        color: var(--lhc-gold-light);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--lhc-gold-light);
+        outline-offset: 1px;
+    }
+}
+
+// The trail sits beside the button rather than under it: `.o_breadcrumb` is a
+// column on desktop, and a block-level button would push the title down a row.
+.o_breadcrumb:has(> .lhc-back-btn) {
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+}
+
+@media (max-width: 820px) {
+    .lhc-back-btn {
+        // Thumb-sized, like every other target at this width. The word is
+        // dropped rather than the whole control shrunk — the arrow alone is
+        // unambiguous once it is the only thing in the corner.
+        height: 40px;
+        padding: 0 12px;
+        font-size: 15px;
+
+        .lhc-back-txt { display: none; }
+    }
+}

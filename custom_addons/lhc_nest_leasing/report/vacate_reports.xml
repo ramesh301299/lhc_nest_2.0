@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fixture checklist for the watchman (Step 1 — printed, marked by hand) -->
+    <record id="action_report_lhc_vacate_checklist" model="ir.actions.report">
+        <field name="name">Fixture Checklist (for Watchman)</field>
+        <field name="model">lhc.vacate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">lhc_nest.report_vacate_checklist</field>
+        <field name="report_file">lhc_nest.report_vacate_checklist</field>
+        <field name="binding_model_id" ref="model_lhc_vacate"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_vacate_checklist">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="rec">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family:Arial,sans-serif;color:#1e293b;">
+                        <h3 style="color:#1c2e5c;">Fixture Checklist — Unit <t t-out="rec.unit_id.code"/></h3>
+                        <p style="font-size:12px;color:#64748b;">Tenant: <t t-out="rec.tenant_id.name"/> · Please inspect each item and mark its condition by hand, then return this sheet to the office.</p>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;" border="1" cellpadding="6">
+                            <thead><tr style="background:#f8fafc;">
+                                <th style="text-align:left;">Item</th><th>Qty</th><th>Move-in Condition</th>
+                                <th style="width:180px;">Watchman-Marked Condition</th><th style="width:120px;">Notes</th>
+                            </tr></thead>
+                            <tbody>
+                                <t t-foreach="rec.line_ids" t-as="ln">
+                                    <tr>
+                                        <td><t t-out="ln.name"/></td>
+                                        <td style="text-align:center;"><t t-out="ln.quantity"/></td>
+                                        <td style="text-align:center;"><t t-out="dict(ln._fields['move_in_condition'].selection).get(ln.move_in_condition,'')"/></td>
+                                        <td>&#160;</td><td>&#160;</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <p style="margin-top:20px;font-size:12px;">Watchman Signature: __________________ &#160;&#160; Date: __________</p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Settlement statement (Step 2) -->
+    <record id="action_report_lhc_vacate_settlement" model="ir.actions.report">
+        <field name="name">Settlement Statement</field>
+        <field name="model">lhc.vacate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">lhc_nest.report_vacate_settlement</field>
+        <field name="report_file">lhc_nest.report_vacate_settlement</field>
+        <field name="binding_model_id" ref="model_lhc_vacate"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_vacate_settlement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="rec">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+                        <div style="border:1px solid #e2e8f0;border-radius:12px;padding:26px;">
+                            <h3 style="text-align:center;color:#1c2e5c;">Vacate Settlement Statement</h3>
+                            <p style="text-align:center;font-size:12px;color:#64748b;">
+                                Unit <t t-out="rec.unit_id.code"/> · <t t-out="rec.tenant_id.name"/> · <t t-out="rec.name"/></p>
+                            <div style="background:#f8fafc;border-radius:8px;padding:14px;font-size:13px;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-weight:600;">
+                                    <span>Advance Held</span><span><t t-out="rec.inr(rec.advance_held)"/></span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#dc2626;">
+                                    <span>Rent Pending</span><span>- <t t-out="rec.inr(rec.rent_pending)"/></span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#dc2626;">
+                                    <span>Maintenance Dues</span><span>- <t t-out="rec.inr(rec.maintenance_dues)"/></span></div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#dc2626;">
+                                    <span>Fixture Damage Deduction</span><span>- <t t-out="rec.inr(rec.fixture_deduction)"/></span></div>
+                                <div style="display:flex;justify-content:space-between;font-weight:800;font-size:15px;color:#16a34a;border-top:2px solid #1c2e5c;padding-top:8px;">
+                                    <span>Net Refund</span><span><t t-out="rec.inr(rec.net_refund)"/></span></div>
+                            </div>
+                            <h4 style="color:#1c2e5c;margin-top:16px;">Fixture Deductions</h4>
+                            <table style="width:100%;border-collapse:collapse;font-size:12px;" border="1" cellpadding="6">
+                                <thead><tr style="background:#f8fafc;"><th style="text-align:left;">Item</th><th>Condition</th><th style="text-align:right;">Deduction</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="rec.line_ids.filtered(lambda l: l.deduction)" t-as="ln">
+                                        <tr><td><t t-out="ln.name"/></td>
+                                            <td style="text-align:center;"><t t-out="dict(ln._fields['watchman_condition'].selection).get(ln.watchman_condition,'')"/></td>
+                                            <td style="text-align:right;"><t t-out="rec.inr(ln.deduction)"/></td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <div style="display:flex;justify-content:space-between;margin-top:24px;font-size:11px;">
+                                <div>Tenant: __________________</div>
+                                <div style="text-align:right;">For Rental Services<br/><br/>Authorised Signatory</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tenant menu. -->
+<odoo>
+    <menuitem id="menu_lhc_tenants" name="Tenants" parent="lhc_nest.menu_lhc_property_grp"
+              action="action_lhc_tenant"
+              sequence="20"/>
+</odoo>

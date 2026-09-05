@@ -1,0 +1,528 @@
+// ===========================================================================
+// LHC NEST — one app bar.
+//
+// Odoo stacks two rows: `header.o_navbar` (systray: activities, messages,
+// company, avatar) and `.o_control_panel` (New, page title, search, pager,
+// view switcher). Two bars for one job, and together they eat ~100px before
+// any content appears.
+//
+// They are merged by lifting the systray out of the flow and parking it at the
+// right-hand end of the control panel, which then becomes the single app bar.
+//
+// This is done in CSS rather than by moving DOM nodes on purpose: the systray
+// keeps its own components, services and dropdown behaviour untouched, so
+// notifications, the activity timer, the company switcher and the user menu all
+// keep working exactly as Odoo built them. Nothing is re-implemented.
+//
+// ---------------------------------------------------------------------------
+// The bar is LIGHT. It used to be a navy gradient, which put the darkest thing
+// on the screen directly beside the second-darkest — the rail — and left the
+// page title reading as chrome rather than as the name of what you are looking
+// at. White on the wash, with the navy kept for the rail and for dialog lids,
+// gives the title the top of the hierarchy and lets a single gold control read
+// as the action.
+// ===========================================================================
+
+// Fallbacks only. The real reserve is measured at runtime by
+// appbar/systray_space.js and published as --lhc-systray-w, because the
+// systray's width depends on the company name, the viewport and whatever
+// systray items other installed apps contribute.
+$lhc-systray-w: 290px;
+$lhc-systray-w-md: 210px;
+$lhc-systray-w-sm: 132px;
+
+body.lhc-shell {
+    // The absolutely-positioned systray needs a positioned ancestor, and the
+    // body is the element that already carries the sidebar offset.
+    position: relative;
+
+    // ---- The systray, lifted onto the control panel row -------------------
+    // The header stays IN the flow but collapses to zero height, so its top
+    // edge lands exactly where the control panel starts. Absolute-positioning
+    // it against the body instead would pin it to the viewport top — above the
+    // database banner — and the systray would ride higher than the bar it is
+    // supposed to sit in.
+    > header.o_navbar {
+        position: relative;
+        height: 0;
+        min-height: 0;
+        overflow: visible;
+        z-index: 6;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        // Only the systray itself is interactive; the rest of this strip must
+        // let clicks reach the search box and buttons underneath it.
+        pointer-events: none;
+
+        .o_main_navbar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: auto;
+            width: auto;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            min-height: var(--lhc-appbar-h);
+            height: var(--lhc-appbar-h);
+            padding: 0 clamp(10px, 1vw, 18px) 0 0;
+        }
+
+        .o_menu_systray {
+            pointer-events: auto;
+            height: var(--lhc-appbar-h);
+            align-items: center;
+        }
+    }
+
+    // ---- The control panel becomes the app bar ----------------------------
+    // NAVY, and it changed back on request. The bar now carries the rail's own
+    // gradient so the chrome reads as one continuous surface: rail down the
+    // left, bar across the top, content in the middle. Everything that sits on
+    // it therefore has to be re-lit for a dark ground — the title, the search
+    // field, the pager, the view switcher and the systray all had colours
+    // chosen for white and would be invisible here. Those follow below.
+    .o_control_panel {
+        background: var(--lhc-grad-navy);
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+        box-shadow: 0 2px 10px rgba(15, 15, 30, .14);
+        min-height: var(--lhc-appbar-h);
+        padding: 10px clamp(10px, 1vw, 18px) 10px clamp(12px, 1.2vw, 22px);
+        // !important because Odoo's own control-panel padding is more specific;
+        // without it the pager and view switcher slide under the systray.
+        padding-right: var(--lhc-systray-w, #{$lhc-systray-w}) !important;
+        margin: 0;
+
+        // --- Everything written on the navy --------------------------------
+        // The same three steps the rail uses: white for the thing you are
+        // looking at, 82% white for live controls, 45% for quiet ones.
+        .o_breadcrumb,
+        .o_last_breadcrumb_item,
+        .o_breadcrumb .active,
+        .o_control_panel_breadcrumbs > *,
+        .o_form_status_indicator {
+            color: #fff;
+        }
+
+        // The parent crumb is a link back, so it takes the rail's idle step
+        // and lights up on hover exactly like a nav row does.
+        .breadcrumb-item a {
+            color: rgba(255, 255, 255, .72);
+            text-decoration: none;
+
+            &:hover { color: #fff; }
+        }
+
+        // The cog beside the title, the pager arrows, the view switcher.
+        .o_cp_action_menus .dropdown-toggle,
+        .o_pager,
+        .o_pager button,
+        .o_pager .o_pager_value,
+        .o_pager .o_pager_limit,
+        .o_cp_switch_buttons .btn {
+            color: rgba(255, 255, 255, .82);
+        }
+
+        .o_pager button:hover,
+        .o_cp_action_menus .dropdown-toggle:hover,
+        .o_cp_switch_buttons .btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, .10);
+        }
+
+        // The active view in the switcher is the "you are here" of the bar,
+        // so it gets the rail's gold rather than another white.
+        .o_cp_switch_buttons .btn.active,
+        .o_cp_switch_buttons .btn[aria-pressed="true"] {
+            color: var(--lhc-gold-light);
+            background: var(--lhc-nav-active-bg);
+        }
+
+        // --- The search field on a dark ground -----------------------------
+        // A white box would punch a hole in the bar. The rail's own recipe
+        // instead: a translucent white well with a hairline, going solid only
+        // on focus so the typed text is on a stable ground.
+        .o_cp_searchview {
+            background: rgba(255, 255, 255, .08);
+            border-color: rgba(255, 255, 255, .16);
+
+            .o_searchview_input,
+            .o_searchview_input::placeholder,
+            .o_searchview_icon,
+            .o_searchview_input_container {
+                color: rgba(255, 255, 255, .82);
+            }
+
+            .o_searchview_input::placeholder { color: rgba(255, 255, 255, .45); }
+
+            > .btn,
+            > .dropdown > .btn,
+            .o_searchview_dropdown_toggler {
+                color: rgba(255, 255, 255, .6);
+
+                &:hover,
+                &:focus { color: #fff; }
+            }
+
+            &:focus-within {
+                background: rgba(255, 255, 255, .14);
+                border-color: var(--lhc-gold);
+                box-shadow: 0 0 0 3px rgba(183, 144, 91, .25);
+            }
+
+            // The applied-filter chips are defined ONCE, in controls.scss.
+            // They used to be styled in both files — this one for the navy bar
+            // and that one for the white bar it replaced — and the two split
+            // across properties, leaving white text on the old light chip
+            // ground at 1.20:1. One definition, in the sheet that loads last.
+        }
+    }
+
+    // ---- The primary action sits on the right -----------------------------
+    // Odoo renders the create button inside `.o_control_panel_breadcrumbs`,
+    // ahead of the title, so "New" lands at the far left of the bar in front
+    // of the name of the page. The conventional ERP placement — and the one
+    // asked for — is the opposite end: the action that starts work belongs
+    // after the thing it acts on.
+    //
+    // `display: contents` on the breadcrumbs wrapper is what keeps this a CSS
+    // change rather than a DOM patch. It dissolves that wrapper for layout
+    // purposes only, so the button and the title become flex items of
+    // `.o_control_panel_main` itself and `order` can finally separate them.
+    // The wrapper stays in the DOM, so anything that queries or portals into
+    // it still works — Odoo's own breadcrumb sections already use `d-contents`
+    // the same way.
+    //
+    // Odoo orders the search at 1 and the pager/view-switcher at 2, so 9 puts
+    // the button last on the row without having to restate either.
+    // ---- The head of the bar: [<- Back]  Title  [New] ----------------------
+    // Odoo renders the create button BEFORE the title, so stock it reads
+    // "New Units". The wanted order is the other way round — the thing, then
+    // the action on it — with the back button ahead of both.
+    //
+    // This no longer dissolves the breadcrumbs wrapper. An earlier version set
+    // `display: contents` on it to lift the button out to the far right of the
+    // whole bar; sending it back beside the title means the wrapper can simply
+    // keep its own flex row and reorder inside itself. One `order`, no fight
+    // with Bootstrap's `!important` utilities, and the group stays together on
+    // the left where the eye starts.
+    //
+    // So inside `.o_control_panel_breadcrumbs`:
+    //   order 0 (default) — `.o_breadcrumb`, itself [<- Back] + the title
+    //   order 1           — `.o_control_panel_main_buttons`, the New button
+    .o_control_panel .o_control_panel_breadcrumbs {
+        .o_control_panel_main_buttons {
+            order: 1;
+            align-self: center;
+            // A margin, not `gap`. The wrapper carries Bootstrap's `gap-1`
+            // utility, which is `!important` and cannot be widened from here;
+            // the margin gives the button its air regardless.
+            margin-left: 16px;
+        }
+    }
+
+    // The one gold control on the screen.
+    //
+    // On the navy bar the theme's navy `.btn-primary` would be invisible, and
+    // this is the single action that starts work on a list — the definition of
+    // what the accent is rationed for. Navy text on the gold, never white:
+    // white on #B7905B is 2.94:1, navy is 5.85:1.
+    .o_control_panel_main_buttons .btn {
+        background: var(--lhc-grad-gold);
+        border: 0;
+        color: var(--lhc-navy);
+        font-weight: 650;
+        padding: 7px 18px;
+        border-radius: var(--lhc-radius-btn);
+        box-shadow: 0 2px 8px rgba(183, 144, 91, .32),
+                    inset 0 1px 0 rgba(255, 255, 255, .38);
+        transition: transform var(--lhc-fast) var(--lhc-ease),
+                    box-shadow var(--lhc-fast) var(--lhc-ease);
+
+        &:hover {
+            color: var(--lhc-navy);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(183, 144, 91, .42),
+                        inset 0 1px 0 rgba(255, 255, 255, .45);
+        }
+
+        &:active { transform: translateY(0); }
+
+        &:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+    }
+
+    // ---- No "New" on a child screen ---------------------------------------
+    // A form reached from a list already has the back button; offering "New"
+    // beside it invites starting a second record while looking at the first,
+    // and it is the control most often hit by mistake on the way back. The
+    // list it came from is one click away and still carries the action.
+    //
+    // `.o_form_button_create` only — Save and Discard are `.o_form_button_save`
+    // / `.o_form_button_cancel` in `.o_form_buttons_edit` and are untouched.
+    .o_form_view .o_form_button_create {
+        display: none !important;
+    }
+
+    // ---- Client actions draw their own bar ---------------------------------
+    // Three screens in this product are client actions, so none of them gets a
+    // `.o_control_panel` — the Dashboard, Quick Entries and the Client View
+    // each render a header of their own. Left alone they were three light
+    // headers among navy ones, and the chrome changed shape as you moved
+    // between screens.
+    //
+    // One rule for all three, deliberately. Listing the heads together is what
+    // guarantees they cannot drift: a change to the bar reaches every screen
+    // that has one, instead of being copied three times and updated twice.
+    .o_lhc_dashboard .o_lhc_head,
+    .lhc-qe .lhc-qe-head,
+    .lhc-cv .lhc-cv-head {
+        // The negative side margins are what let a header inside a padded
+        // screen still bleed to both edges like the real bar does.
+        margin: 0 calc(var(--lhc-pad) * -1) var(--lhc-gap);
+        padding: 12px clamp(12px, 1.2vw, 22px);
+        padding-right: var(--lhc-systray-w, #{$lhc-systray-w});
+        min-height: var(--lhc-appbar-h);
+        background: var(--lhc-grad-navy);
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+        box-shadow: 0 2px 10px rgba(15, 15, 30, .14);
+
+        // ---- IT STAYS PUT WHEN THE PAGE SCROLLS ---------------------------
+        // This is the difference between a client action and a normal view.
+        // A list or a form has `.o_control_panel` OUTSIDE `.o_content`, so the
+        // bar sits above the scroller and never moves. A client action has no
+        // control panel: its head is the FIRST CHILD of the box that scrolls,
+        // so it scrolled away with the content.
+        //
+        // That left the systray behind. It is absolutely positioned against
+        // `body.lhc-shell`, which does not scroll — so once the head had gone,
+        // "My Company" and the avatar were left floating over the cards with
+        // no bar under them. That is the symptom; this is the cause.
+        //
+        // `sticky` rather than `fixed`: fixed would take it out of flow and
+        // the content would jump up underneath it by the bar's height, and it
+        // would also have to re-derive the sidebar offset. Sticky keeps the
+        // element in flow, so the layout is unchanged and it simply stops at
+        // the top of its scrollport — which is exactly where the systray is.
+        position: sticky;
+        top: 0;
+        // Above the cards sliding under it, below the systray itself.
+        z-index: 5;
+
+        // Deliberately NO display/flex here. The three heads are laid out
+        // differently in their own templates — the dashboard and the client
+        // view each wrap their title and sub-line in a div and lay the head out
+        // as a row, Quick Entries puts the h1 and the sub-line as direct
+        // siblings. Forcing `display: flex` on all three would put Quick
+        // Entries' title and subtitle side by side. This rule owns the bar's
+        // surface; each screen keeps its own arrangement inside it.
+        h1 { color: #fff; }
+    }
+
+    // Quick Entries stacks its two lines, so it centres them as a column
+    // rather than inheriting a row it was never built for.
+    .lhc-qe .lhc-qe-head {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    // The sub-line under each title: the rail's quiet step.
+    .o_lhc_dashboard .o_lhc_sub,
+    .lhc-qe .lhc-qe-sub,
+    .lhc-cv .lhc-cv-sub {
+        color: rgba(255, 255, 255, .6);
+    }
+
+    // The client view keeps its actions in its header, so they are on navy now
+    // and cannot stay as light-ground buttons. Same two steps as the rail: the
+    // create/save action takes the gold, everything beside it is a translucent
+    // white well.
+    .lhc-cv .lhc-cv-head {
+        .lhc-btn {
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .18);
+            color: rgba(255, 255, 255, .88);
+
+            &:hover {
+                background: rgba(255, 255, 255, .18);
+                border-color: rgba(255, 255, 255, .3);
+                color: #fff;
+            }
+        }
+
+        .lhc-btn-primary {
+            background: var(--lhc-grad-gold);
+            border-color: transparent;
+            // Navy on the gold, never white — 5.85:1 against 2.94:1.
+            color: var(--lhc-navy);
+            font-weight: 650;
+
+            &:hover {
+                background: var(--lhc-grad-gold);
+                border-color: transparent;
+                color: var(--lhc-navy);
+            }
+        }
+    }
+
+    // Refresh, removed on request.
+    //
+    // Hidden here rather than cut out of `dashboard.xml`: that template belongs
+    // to lhc_nest_reports, and this addon's contract is that it changes
+    // presentation only, so uninstalling the theme has to give the button back
+    // rather than leave the module permanently altered. The figures still
+    // reload whenever the action is opened, which is what the button was
+    // duplicating.
+    .o_lhc_refresh { display: none; }
+}
+
+// ---- The systray on the navy bar -----------------------------------------
+// These glyphs were re-lit for the white bar this file used to draw. The bar
+// is navy again, so they go back to the rail's own two steps — 82% white idle,
+// full white on hover — which is also what a foreign Odoo app already gets.
+body.lhc-shell:not(.lhc-foreign-app) {
+    .o_menu_systray {
+        .dropdown-toggle,
+        .o_mail_systray_item,
+        > .o_navbar_apps_menu,
+        a, span, i, button {
+            color: rgba(255, 255, 255, .82);
+        }
+
+        .dropdown-toggle:hover,
+        a:hover, button:hover,
+        .o_mail_systray_item:hover {
+            color: #fff;
+        }
+
+        // The counters — unread messages, pending activities. These are the
+        // one thing in the bar that is allowed to shout.
+        .badge,
+        .o-mail-DiscussSystray-counter {
+            background: var(--lhc-red);
+            color: #fff;
+        }
+
+        .o_avatar, img { border-radius: 50%; }
+    }
+}
+
+// ---- Responsive: give the systray less room, then almost none ------------
+@media (max-width: 1200px) {
+    body.lhc-shell {
+        .o_control_panel { padding-right: var(--lhc-systray-w, #{$lhc-systray-w-md}) !important; }
+        .o_lhc_dashboard .o_lhc_head { padding-right: var(--lhc-systray-w, #{$lhc-systray-w-md}); }
+    }
+}
+
+@media (max-width: 820px) {
+    body.lhc-shell {
+        // Room for the fixed hamburger on the left as well.
+        .o_control_panel {
+            padding-left: 52px !important;
+            padding-right: var(--lhc-systray-w, #{$lhc-systray-w-sm}) !important;
+        }
+
+        .o_lhc_dashboard .o_lhc_head {
+            padding-left: 52px;
+            padding-right: var(--lhc-systray-w, #{$lhc-systray-w-sm});
+        }
+
+        // "My Company" is the first thing to go — the switcher is still in the
+        // user menu, and the avatar keeps the account reachable.
+        > header.o_navbar .o_menu_systray .o_switch_company_menu span,
+        > header.o_navbar .o_menu_systray .o_switch_company_menu .fa {
+            display: none;
+        }
+    }
+}
+
+@media (max-width: 600px) {
+    body.lhc-shell {
+        .o_control_panel,
+        .o_lhc_dashboard .o_lhc_head {
+            // The control panel already stacks into rows at this width
+            // (mobile.scss), so only the first row needs to clear the systray.
+            padding-right: 12px !important;
+
+            > :first-child { padding-right: var(--lhc-systray-w, #{$lhc-systray-w-sm}); }
+        }
+    }
+}
+
+
+// ===========================================================================
+// The save / discard indicator.
+//
+// Odoo renders these two as `btn-light` — a WHITE pill — with `px-1 py-0`
+// jammed against each other, which on the navy bar reads as a small bright
+// blob rather than as two controls. They are the most consequential pair of
+// buttons on a form: one commits the record, the other throws the edit away.
+//
+// Given a container of their own, air between them, and the brand gold.
+// ===========================================================================
+body.lhc-shell .o_control_panel {
+
+    // Air between the record's name and the pair.
+    .o_form_status_indicator {
+        margin-left: 14px;
+    }
+
+    // The container the two buttons were asked for: a gold-tinted well with a
+    // gold hairline, so the pair reads as one object attached to the title.
+    .o_form_status_indicator_buttons {
+        display: inline-flex;
+        align-items: center;
+        // The space between save and discard.
+        gap: 6px;
+        padding: 3px;
+        border-radius: var(--lhc-radius-sm);
+        background: rgba(183, 144, 91, .12);
+        border: 1px solid rgba(183, 144, 91, .42);
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 26px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            // The LIT gold: 8.12:1 on the bar's navy, where the base #B7905B
+            // would be 5.85:1 — and these are 13px glyphs.
+            color: var(--lhc-gold-light);
+            box-shadow: none;
+            // `!important` matches Bootstrap's `px-1 py-0` utilities, which are
+            // compiled with it and would otherwise keep the old cramped box.
+            padding: 0 !important;
+
+            &:hover {
+                background: rgba(183, 144, 91, .26);
+                color: var(--lhc-gold-light);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--lhc-gold-light);
+                outline-offset: 1px;
+            }
+        }
+
+        // Discarding throws away work, so it is the one control here that
+        // announces itself as destructive — on hover only, so it does not sit
+        // there looking like an error.
+        .o_form_button_cancel:hover {
+            background: rgba(184, 50, 50, .30);
+            color: #ffd9d9;
+        }
+    }
+
+    // The "unable to save" warning beside them.
+    .o_form_status_indicator .text-danger {
+        color: #ffb4b4 !important;
+    }
+}

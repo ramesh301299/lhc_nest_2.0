@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Document sequences for this addon.
+
+  Split out of the original data/sequences.xml so numbering ships with the
+  model that consumes it. noupdate="1" is deliberate: an upgrade must never
+  reset number_next, or the next receipt reuses a number already issued.
+-->
+<odoo noupdate="1">
+
+    <record id="seq_lhc_property" model="ir.sequence">
+        <field name="name">LHC Property</field>
+        <field name="code">lhc.property</field>
+        <field name="prefix">PROP-</field>
+        <field name="padding">3</field>
+    </record>
+
+    <record id="seq_lhc_booking" model="ir.sequence">
+        <field name="name">LHC Booking</field>
+        <field name="code">lhc.booking</field>
+        <field name="prefix">BOOK-</field>
+        <field name="padding">4</field>
+    </record>
+
+</odoo>

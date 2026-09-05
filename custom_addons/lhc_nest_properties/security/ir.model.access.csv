@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_property_admin,property.admin,model_lhc_property,lhc_nest.group_lhc_admin,1,1,1,1
+access_property_acct,property.acct,model_lhc_property,lhc_nest.group_lhc_accountant,1,1,1,0
+access_unit_admin,unit.admin,model_lhc_unit,lhc_nest.group_lhc_admin,1,1,1,1
+access_unit_acct,unit.acct,model_lhc_unit,lhc_nest.group_lhc_accountant,1,1,1,0
+access_fixture_admin,fixture.admin,model_lhc_fixture_purchase,lhc_nest.group_lhc_admin,1,1,1,1
+access_fixture_acct,fixture.acct,model_lhc_fixture_purchase,lhc_nest.group_lhc_accountant,1,1,1,0
+access_booking_admin,booking.admin,model_lhc_booking,lhc_nest.group_lhc_admin,1,1,1,1
+access_booking_acct,booking.acct,model_lhc_booking,lhc_nest.group_lhc_accountant,1,1,1,0

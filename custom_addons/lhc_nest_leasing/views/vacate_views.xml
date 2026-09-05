@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_vacate_list" model="ir.ui.view">
+        <field name="name">lhc.vacate.list</field>
+        <field name="model">lhc.vacate</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="unit_id"/>
+                <field name="tenant_id"/>
+                <field name="net_refund"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_vacate_form" model="ir.ui.view">
+        <field name="name">lhc.vacate.form</field>
+        <field name="model">lhc.vacate</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_mark_vacant" type="object"
+                            string="🚪 Mark Vacant &amp; Close Agreement"
+                            class="btn-danger" invisible="state == 'done'"/>
+                    <button name="%(action_report_lhc_vacate_checklist)d" type="action"
+                            string="🖨️ Print for Watchman" class="btn-secondary"/>
+                    <button name="%(action_report_lhc_vacate_settlement)d" type="action"
+                            string="🖨️ Settlement Statement" class="btn-secondary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <field name="agreement_id"/>
+                        <field name="unit_id"/>
+                        <field name="tenant_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Step 1 · Fixture Checklist">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="move_in_condition"/>
+                                    <field name="watchman_condition"/>
+                                    <field name="deduction"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                            <group string="Other Checklist Items">
+                                <field name="maint_cleared"/>
+                                <field name="rent_checked"/>
+                                <field name="key_handover"/>
+                                <field name="eb_final_reading"/>
+                            </group>
+                        </page>
+                        <page string="Step 2 · Settlement">
+                            <group>
+                                <field name="advance_held"/>
+                                <field name="rent_pending"/>
+                                <field name="maintenance_dues"/>
+                                <field name="fixture_deduction"/>
+                                <field name="net_refund" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                        <page string="Step 3 · Move-out Photos">
+                            <field name="agreement_id" invisible="1"/>
+                            <field name="unit_id" invisible="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_vacate" model="ir.actions.act_window">
+        <field name="name">Vacate Checklist</field>
+        <field name="res_model">lhc.vacate</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

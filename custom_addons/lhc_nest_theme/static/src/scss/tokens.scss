@@ -1,0 +1,243 @@
+// ===========================================================================
+// LHC NEST — design tokens, republished as CSS custom properties.
+//
+// The SCSS variables in _lhc_tokens.scss are compile-time only. These are the
+// runtime handles every other stylesheet in this addon, the OWL components and
+// the dashboard use, so a hex code is never repeated outside _lhc_tokens.scss.
+//
+// Two layers, and the order matters:
+//
+//   --app-*   the THEME. The two brand colours and everything derived from
+//             them — hover, active, tint, and the foreground that is legible
+//             ON each. This is the only block anything would ever overwrite.
+//   --lhc-*   the SYSTEM. The names the rest of this addon already uses.
+//             Defined in terms of the --app-* layer rather than from the SCSS
+//             tokens directly, and that indirection is the whole trick: a rule
+//             written as `background: var(--lhc-navy)` follows a brand change
+//             it has never heard of.
+//
+// NOTE: the webfonts are self-hosted and declared in fonts.scss, which is
+// loaded ahead of this file. There is deliberately no CSS @import and no
+// Google Fonts <link>: a Google URL carries `;` separators in its
+// `wght@400;500;...` parameter, which terminate an @import early and break
+// parsing of the whole concatenated bundle — and a CDN face never arrives at
+// all on an on-premise install. See fonts.scss for the full reasoning.
+// ===========================================================================
+
+:root {
+    // ======================================================================
+    // THEME LAYER
+    // ======================================================================
+
+    // --- Primary: GOLD, the brand's dominant colour ------------------------
+    // The roles are the frozen brand order: gold leads, navy supports. Swapping
+    // them here rather than at each use site is the whole point of this layer —
+    // a rule written as `var(--app-primary)` followed the change without being
+    // touched.
+    --app-primary:        #{$lhc-gold};
+    // Channels rather than a colour: Bootstrap's focus glow wants three
+    // numbers, so a themed focus ring needs this alongside the hex.
+    --app-primary-rgb:    183, 144, 91;
+    --app-primary-hover:  #{$lhc-gold-dark};
+    --app-primary-active: #{$lhc-gold-dark};
+    --app-primary-light:  #{$lhc-gold-bg};
+    --app-primary-dark:   #{$lhc-gold-dark};
+    // The readable gold, for when it has to be a word rather than a fill.
+    --app-primary-fg:     #{$lhc-gold-fg};
+    // NAVY, not white. #B7905B carries white at 2.94:1 and navy at 5.85:1 —
+    // which is why every gold control in this system has dark text on it.
+    // This is the one place that decision lives.
+    --app-on-primary:     #{$lhc-navy};
+
+    // --- Secondary: NAVY, the chrome --------------------------------------
+    // The rail, the app bar, dialog lids, headings. 17.17:1 on white.
+    --app-accent:         #{$lhc-navy};
+    --app-accent-rgb:     17, 27, 48;
+    --app-accent-hover:   #{$lhc-navy-hover};
+    --app-accent-active:  #{$lhc-navy-light};
+    --app-accent-light:   #{$lhc-navy-bg};
+    --app-accent-dark:    #{$lhc-navy-dark};
+    --app-accent-fg:      #{$lhc-navy};
+    --app-on-accent:      #ffffff;
+
+    // ======================================================================
+    // SYSTEM LAYER — the names the rest of the codebase already uses
+    // ======================================================================
+
+    // ---- Brand core ------------------------------------------------------
+    // Navy now reads from the SECONDARY slot and gold from the PRIMARY one.
+    // Both names keep meaning exactly what they say, so not one of the
+    // hundreds of `var(--lhc-navy)` / `var(--lhc-gold)` uses in this addon
+    // had to change when the roles were swapped.
+    --lhc-navy:        var(--app-accent);
+    --lhc-navy-light:  var(--app-accent-active);
+    --lhc-navy-dark:   var(--app-accent-dark);
+    --lhc-navy-hover:  var(--app-accent-hover);
+    --lhc-navy-bg:     var(--app-accent-light);
+
+    --lhc-gold:        var(--app-primary);
+    --lhc-gold-light:  #{$lhc-gold-light};
+    --lhc-gold-dark:   var(--app-primary-dark);
+    --lhc-gold-fg:     var(--app-primary-fg);
+    --lhc-gold-bg:     var(--app-primary-light);
+
+    --lhc-steel:       #{$lhc-steel};
+    --lhc-steel-dark:  #{$lhc-steel-dark};
+    --lhc-steel-bg:    #{$lhc-steel-bg};
+
+    --lhc-navy-muted:  rgba(17, 27, 48, .08);
+    --lhc-navy-border: rgba(17, 27, 48, .10);
+    --lhc-gold-muted:  rgba(183, 144, 91, .15);
+    --lhc-gold-subtle: rgba(183, 144, 91, .08);
+
+    // ---- Surfaces --------------------------------------------------------
+    --lhc-bg:          #{$lhc-bg};       // the page wash
+    --lhc-surface:     #{$lhc-card};     // a card
+    --lhc-white:       #{$lhc-card};
+    --lhc-cream:       #{$lhc-cream};
+    --lhc-card:        #{$lhc-card};
+
+    // The banded head of a table. One token, so every list bands the same way.
+    --lhc-section-h:     #{$lhc-section-h};
+    --lhc-section-ink:   #{$lhc-section-ink};
+    --lhc-section-mark:  #{$lhc-section-mark};
+
+    --lhc-border:      #{$lhc-border};
+    --lhc-border-2:    #{$lhc-border-2};
+    // 3:1 on white. A control boundary, not a decorative rule — see the note
+    // in _lhc_tokens.scss for why this is separate from --lhc-border.
+    --lhc-input-border: #{$lhc-input-border};
+
+    // ---- Text ------------------------------------------------------------
+    --lhc-ink:         #{$lhc-text};
+    --lhc-text:        #{$lhc-text};
+    --lhc-muted:       #{$lhc-muted};
+    --lhc-muted-2:     #{$lhc-muted-2};
+    --lhc-muted-decor: #{$lhc-muted-decor};
+    --lhc-icon-quiet:  #{$lhc-icon-quiet};
+
+    // ---- Status triplets: solid / pale tint / ink on the tint -------------
+    // The third value is what makes a badge legible; a pale tint carrying the
+    // solid colour as text fails contrast at badge sizes.
+    --lhc-green:  #{$lhc-green};  --lhc-green-pale:  #{$lhc-green-pale};  --lhc-green-ink:  #{$lhc-green-ink};
+    --lhc-red:    #{$lhc-red};    --lhc-red-pale:    #{$lhc-red-pale};    --lhc-red-ink:    #{$lhc-red-ink};
+    --lhc-amber:  #{$lhc-amber};  --lhc-amber-pale:  #{$lhc-amber-pale};  --lhc-amber-ink:  #{$lhc-amber-ink};
+    --lhc-blue:   #{$lhc-blue};   --lhc-blue-pale:   #{$lhc-blue-pale};   --lhc-blue-ink:   #{$lhc-blue-ink};
+    --lhc-teal:   #{$lhc-teal};   --lhc-teal-pale:   #{$lhc-teal-pale};   --lhc-teal-ink:   #{$lhc-teal-ink};
+    --lhc-purple: #{$lhc-purple}; --lhc-purple-pale: #{$lhc-purple-pale}; --lhc-purple-ink: #{$lhc-purple-ink};
+    --lhc-gray-pale: #{$lhc-gray-pale}; --lhc-gray-ink: #{$lhc-gray-ink};
+
+    // The outline of a tinted surface — see the note in _lhc_tokens.scss.
+    --lhc-green-line:  #{$lhc-green-line};
+    --lhc-red-line:    #{$lhc-red-line};
+    --lhc-amber-line:  #{$lhc-amber-line};
+    --lhc-blue-line:   #{$lhc-blue-line};
+    --lhc-teal-line:   #{$lhc-teal-line};
+    --lhc-purple-line: #{$lhc-purple-line};
+    --lhc-gray-line:   #{$lhc-gray-line};
+
+    // ---- Neutrals --------------------------------------------------------
+    --lhc-gray-50:  #{$lhc-gray-50};
+    --lhc-gray-100: #{$lhc-gray-100};
+    --lhc-gray-200: #{$lhc-gray-200};
+    --lhc-gray-300: #{$lhc-gray-300};
+    --lhc-gray-400: #{$lhc-gray-400};
+    --lhc-gray-500: #{$lhc-gray-500};
+    --lhc-gray-700: #{$lhc-gray-700};
+    --lhc-gray-800: #{$lhc-gray-800};
+
+    // ---- The rail --------------------------------------------------------
+    --lhc-nav-bg:        #{$lhc-nav-bg};
+    --lhc-nav-well:      #{$lhc-nav-well};
+    --lhc-nav-text:      #{$lhc-nav-text};
+    --lhc-nav-text-on:   #{$lhc-nav-text-on};
+    --lhc-nav-label:     #{$lhc-nav-label};
+    --lhc-nav-indicator: #{$lhc-nav-indicator};
+    --lhc-nav-active-bg: #{$lhc-nav-active-bg};
+    --lhc-nav-hover-bg:  #{$lhc-nav-hover-bg};
+    --lhc-nav-border:    #{$lhc-nav-border};
+
+    // ---- Shape and depth -------------------------------------------------
+    --lhc-radius:      #{$lhc-radius};
+    --lhc-radius-sm:   #{$lhc-radius-sm};
+    --lhc-radius-btn:  #{$lhc-radius-btn};
+    --lhc-radius-lg:   #{$lhc-radius-lg};
+    --lhc-radius-pill: #{$lhc-radius-pill};
+    --lhc-shadow:      #{$lhc-shadow};
+    --lhc-shadow-md:   #{$lhc-shadow-md};
+    --lhc-shadow-lg:   #{$lhc-shadow-lg};
+    --lhc-focus-ring:  #{$lhc-focus-ring};
+
+    // ---- Premium surfaces ------------------------------------------------
+    // Used sparingly: the rail, the one gold affordance, and the barely-there
+    // lift on a card. A gradient on every surface reads as decoration.
+    --lhc-grad-navy: linear-gradient(158deg, #1e2b45 0%, #{$lhc-navy} 52%, #{$lhc-navy-dark} 100%);
+    --lhc-grad-gold: linear-gradient(135deg, #{$lhc-gold-dark} 0%, #{$lhc-gold} 52%, #{$lhc-gold-light} 100%);
+    --lhc-grad-card: linear-gradient(168deg, #ffffff 0%, #{$lhc-cream} 100%);
+
+    // ---- Motion ----------------------------------------------------------
+    --lhc-ease: #{$lhc-ease};
+    --lhc-fast: #{$lhc-fast};
+    --lhc-base: #{$lhc-base};
+    --lhc-slow: #{$lhc-slow};
+
+    // ---- Spacing ---------------------------------------------------------
+    --lhc-space-1: #{$lhc-space-1};
+    --lhc-space-2: #{$lhc-space-2};
+    --lhc-space-3: #{$lhc-space-3};
+    --lhc-space-4: #{$lhc-space-4};
+    --lhc-space-6: #{$lhc-space-6};
+    --lhc-space-8: #{$lhc-space-8};
+
+    // ---- Fluid scale -----------------------------------------------------
+    // clamp(floor for laptops, preferred, ceiling for large monitors), so the
+    // backend breathes rather than sitting at one fixed size on every display.
+    --lhc-sidebar-w: clamp(246px, 15.5vw, 310px);
+    --lhc-pad:       clamp(18px, 1.7vw, 40px);
+    --lhc-gap:       clamp(12px, 1.05vw, 22px);
+
+    --lhc-fs-hero:  clamp(22px,   1.65vw, 32px);
+    // Capped below the display size these cards would otherwise take: they
+    // carry rupee figures with Indian digit grouping, which are far longer
+    // than the samples a type scale is usually tuned on.
+    --lhc-fs-stat:  clamp(20px,   1.65vw, 30px);
+    --lhc-fs-title: clamp(13px,    .95vw, 17px);
+    --lhc-fs-body:  clamp(12.5px,  .86vw, 15.5px);
+    --lhc-fs-label: clamp(11px,    .76vw, 13.5px);
+    --lhc-fs-micro: clamp(10.5px,  .68vw, 12.5px);
+    --lhc-fs-nav:   clamp(12.5px,  .83vw, 15px);
+
+    // ---- Chrome metrics --------------------------------------------------
+    // Height of Odoo's navbar. Referenced by the sidebar and the content
+    // offset so the three stay in step if it ever changes.
+    --lhc-navbar-h: 46px;
+    // Height of the single merged app bar (systray + control panel on one
+    // row). Both halves read it, so they cannot drift apart.
+    --lhc-appbar-h: 54px;
+}
+
+// Typography rendering. Set once, on the element every bundle reaches.
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// Scrollbars: slim and neutral, so a scrolling table does not grow a grey slab
+// down its edge.
+::-webkit-scrollbar        { width: 10px; height: 10px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  {
+    background: rgba(17, 27, 48, .20);
+    border-radius: $lhc-radius-sm;
+    border: 2px solid transparent;
+    background-clip: content-box;
+
+    &:hover { background: rgba(17, 27, 48, .34); background-clip: content-box; }
+}
+
+// Odoo's neutralized-database banner, removed on request. It is appended after
+// #wrapwrap with inline colours, so hiding it needs the id and `!important`.
+// See login.scss for what disappears with it: a neutralized database has
+// outgoing mail, crons and payment providers disabled, and this banner was the
+// only thing on screen saying so.
+#oe_neutralize_banner { display: none !important; }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The LHC NEST menu skeleton.
+
+  Only the root and the group headers live here. Every leaf menu ships with the
+  addon that owns its action, so installing lhc_nest_money makes exactly the
+  Money leaves appear and uninstalling it takes exactly those away.
+
+  The group headers cannot move down with their children, because most of them
+  hold leaves from more than one addon:
+
+    Property & Tenants  <- properties (3), tenants (1), base (1)
+    Tools               <- tools (4), leasing (photos)
+    Quick Entries       <- money (4), properties (2), reports (3)
+
+  If a header lived in one of those addons, uninstalling it would orphan the
+  other addons' menus. Keeping the five headers plus the root here is what lets
+  the business addons come and go independently.
+-->
+<odoo>
+
+    <!-- ROOT -->
+    <menuitem id="menu_lhc_root" name="LHC NEST"
+              web_icon="lhc_nest,static/description/icon.png"
+              sequence="5"
+              groups="lhc_nest.group_lhc_accountant,lhc_nest.group_lhc_admin"/>
+
+    <!-- Quick Entries hub. Its children come from three different addons, so
+         the parent belongs here. lhc_nest_theme points it at the card-grid
+         client action; without the theme it stays an ordinary submenu. -->
+    <menuitem id="menu_lhc_quick" name="Quick Entries" parent="menu_lhc_root" sequence="20"/>
+
+    <!-- GROUP HEADERS -->
+    <menuitem id="menu_lhc_property_grp" name="Property &amp; Tenants"
+              parent="menu_lhc_root" sequence="30"/>
+    <menuitem id="menu_lhc_leasing_grp" name="Leasing"
+              parent="menu_lhc_root" sequence="40"/>
+    <menuitem id="menu_lhc_money_grp" name="Money"
+              parent="menu_lhc_root" sequence="50"/>
+    <menuitem id="menu_lhc_reports_grp" name="Reports"
+              parent="menu_lhc_root" sequence="60"
+              groups="lhc_nest.group_lhc_admin"/>
+    <menuitem id="menu_lhc_tools_grp" name="Tools"
+              parent="menu_lhc_root" sequence="70"/>
+
+    <!-- Billing Entities. The model is the GST source of truth, shared by
+         leasing, money and reports, so it lives in the base addon with them. -->
+    <menuitem id="menu_lhc_entities" name="Billing Entities"
+              parent="menu_lhc_property_grp"
+              action="action_lhc_billing_entity" sequence="30"
+              groups="lhc_nest.group_lhc_admin"/>
+
+</odoo>

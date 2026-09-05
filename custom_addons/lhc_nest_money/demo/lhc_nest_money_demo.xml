@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Money, in the four shapes the approval workflow can leave a record in.
+
+      Receipts are written straight into their final state rather than pushed
+      through action_approve(). Demo data loads as __system__, which holds no
+      LHC role, and action_approve() is Admin-only by design. Writing `state`
+      on create is safe: _assign_and_route() returns early for anything that is
+      not draft, so the number is still allocated from the right sequence and
+      nothing is re-routed.
+
+      The consequence is that the ledger credits action_approve() would have
+      posted are stated explicitly at the bottom of this file. They have to
+      match the approved receipts above them.
+    -->
+
+    <!-- ==============================================================
+         MAINTENANCE — recovered, pending, owner-borne, and the
+         building-level split that generates one child per unit.
+         ============================================================== -->
+
+    <!-- Tenant-payable and still pending: this is what a receipt bundles. -->
+    <record id="demo_maint_geyser" model="lhc.maintenance">
+        <field name="date" eval="(DateTime.today() - relativedelta(days=21)).strftime('%Y-%m-%d')"/>
+        <field name="scope">unit</field>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_a101"/>
+        <field name="expense_type">Geyser thermostat replacement</field>
+        <field name="vendor">Sri Balaji Electricals</field>
+        <field name="amount">2400</field>
+        <field name="payable_by">tenant</field>
+        <field name="note">Thermostat failed outside warranty; tenant agreed to bear it.</field>
+    </record>
+
+    <!-- Owner-borne, so recovery_status computes to N/A and it never appears
+         in a receipt's bundling domain. -->
+    <record id="demo_maint_plumbing" model="lhc.maintenance">
+        <field name="date" eval="(DateTime.today() - relativedelta(days=40)).strftime('%Y-%m-%d')"/>
+        <field name="scope">unit</field>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_b201"/>
+        <field name="expense_type">Bathroom pipe leak — concealed line</field>
+        <field name="vendor">Anand Plumbing Works</field>
+        <field name="amount">6800</field>
+        <field name="payable_by">owner</field>
+        <field name="note">Structural, not tenant-caused. Borne by the owner.</field>
+    </record>
+
+    <!-- Building-level, recurring, NOT split: goes whole to the GST entity
+         because also_receives_building is set on it (spec 5.3). -->
+    <record id="demo_maint_lift_amc" model="lhc.maintenance">
+        <field name="date" eval="(DateTime.today() - relativedelta(days=15)).strftime('%Y-%m-%d')"/>
+        <field name="scope">building</field>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="expense_type">Lift AMC — quarterly</field>
+        <field name="vendor">Johnson Lifts</field>
+        <field name="amount">9500</field>
+        <field name="payable_by">owner</field>
+        <field name="recurring" eval="True"/>
+        <field name="split_equally" eval="False"/>
+    </record>
+
+    <!-- Building-level AND split: create() runs _create_split_charges(), which
+         divides by the unit count, rounds each share down to the rupee and
+         puts the remainder on the FIRST unit. Four units and ₹12,000 divides
+         evenly; the uneven case is the water tax below it. -->
+    <record id="demo_maint_watchman" model="lhc.maintenance">
+        <field name="date" eval="(DateTime.today() - relativedelta(days=8)).strftime('%Y-%m-%d')"/>
+        <field name="scope">building</field>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="expense_type">Watchman salary</field>
+        <field name="vendor">Murugesan</field>
+        <field name="amount">12000</field>
+        <field name="payable_by">owner</field>
+        <field name="recurring" eval="True"/>
+        <field name="split_equally" eval="True"/>
+        <field name="note">Split equally across all units and recovered from tenants.</field>
+    </record>
+
+    <!-- Deliberately not divisible by four: ₹4,510 / 4 = 1,127.50, so each
+         unit is charged ₹1,127 and the first carries the ₹2 remainder. The
+         only way to see the rounding rule is to have a case that needs it. -->
+    <record id="demo_maint_water_tax" model="lhc.maintenance">
+        <field name="date" eval="(DateTime.today() - relativedelta(days=6)).strftime('%Y-%m-%d')"/>
+        <field name="scope">building</field>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="expense_type">Metro water tax — half year</field>
+        <field name="vendor">CMWSSB</field>
+        <field name="amount">4510</field>
+        <field name="payable_by">owner</field>
+        <field name="split_equally" eval="True"/>
+    </record>
+
+    <!-- ==============================================================
+         RECEIPTS
+         ============================================================== -->
+
+    <!-- Approved, non-GST. Rent only: 22,000 payable, no GST because Kumar is
+         not registered. -->
+    <record id="demo_receipt_a101_prev" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(months=1, day=4)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="(DateTime.today() - relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="payment_mode">upi</field>
+        <field name="rent_amount">22000</field>
+        <field name="bank_label">SBI ****4821</field>
+        <field name="state">approved</field>
+    </record>
+
+    <!-- Approved, current month, and the maintenance charge is bundled into
+         it — which is what a receipt is for. Maintenance is added after GST,
+         never marked up (spec 5.6). -->
+    <record id="demo_receipt_a101_cur" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(day=4)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="DateTime.today().strftime('%B %Y')"/>
+        <field name="payment_mode">neft</field>
+        <field name="rent_amount">22000</field>
+        <field name="maintenance_ids" eval="[(6, 0, [ref('demo_maint_geyser')])]"/>
+        <field name="bank_label">SBI ****4821</field>
+        <field name="state">approved</field>
+    </record>
+
+    <!-- Approved GST Tax Invoice with TDS deducted at source by the company
+         tenant. TDS is NOT a shortfall: the bank receives total minus TDS and
+         the balance is settled by the separate TDS ledger credit (spec 5.11). -->
+    <record id="demo_receipt_shop_cur" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_shop"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(day=9)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="DateTime.today().strftime('%B %Y')"/>
+        <field name="payment_mode">neft</field>
+        <field name="rent_amount">49500</field>
+        <field name="tds_applicable" eval="True"/>
+        <field name="tds_amount">4950</field>
+        <field name="tds_challan">TDS/194I/Q2/00871</field>
+        <field name="bank_label">IOB ****9210</field>
+        <field name="state">approved</field>
+    </record>
+
+    <!-- Posted by an Accountant and waiting: this is the record the Admin's
+         Approval Queue is supposed to show. -->
+    <record id="demo_receipt_b201_pending" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_b201"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(day=6)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="DateTime.today().strftime('%B %Y')"/>
+        <field name="payment_mode">cash</field>
+        <field name="rent_amount">33500</field>
+        <field name="bank_label">Canara ****1820</field>
+        <field name="state">pending</field>
+    </record>
+
+    <!-- The wrong-bank exception: rent for a Vijila lease landed in the Kumar
+         account. Approved, but flagged, so the bank-wise collection report has
+         a discrepancy to report instead of a clean sheet. -->
+    <record id="demo_receipt_b201_wrongbank" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_b201"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(months=1, day=6)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="(DateTime.today() - relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="payment_mode">upi</field>
+        <field name="rent_amount">33500</field>
+        <field name="bank_label">SBI ****4821</field>
+        <field name="other_bank" eval="True"/>
+        <field name="other_bank_reason">Tenant paid to the Kumar account by mistake;
+transfer to Vijila pending.</field>
+        <field name="state">approved</field>
+    </record>
+
+    <!-- A partial payment: ₹18,000 against ₹22,000, no TDS, so the shortfall
+         is real and `partial` must compute True.
+
+         Written in two steps, and it has to be.
+
+         _compute_amounts() computes gst_amount, maintenance_amount,
+         total_invoice, gst_rate AND amount_received_bank in one method, and two
+         of those are readonly=False. Supplying amount_received_bank in the same
+         create() marks the whole method as manually set, so it never runs: the
+         receipt stores gst=0, maintenance=0 and total=0 while showing the bank
+         figure that was passed in. On a GST lease that silently records a
+         ₹0 tax invoice.
+
+         Creating first lets the compute store the real amounts; the second
+         record then writes only the bank figure over them. Splitting
+         _compute_amounts into one method per stored field would remove the need
+         for this, and would also fix the same warning Odoo logs about lhc.bill
+         at every startup. -->
+    <record id="demo_receipt_a101_partial" model="lhc.receipt">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="receipt_date" eval="(DateTime.today() - relativedelta(months=2, day=7)).strftime('%Y-%m-%d')"/>
+        <field name="period" eval="(DateTime.today() - relativedelta(months=2)).strftime('%B %Y')"/>
+        <field name="payment_mode">cash</field>
+        <field name="rent_amount">22000</field>
+        <field name="bank_label">SBI ****4821</field>
+        <field name="state">approved</field>
+    </record>
+
+    <record id="demo_receipt_a101_partial" model="lhc.receipt">
+        <field name="amount_received_bank">18000</field>
+    </record>
+
+    <!-- ==============================================================
+         BILLS — issued before payment. Proforma for the non-GST lease,
+         Tax Invoice for the GST one.
+         ============================================================== -->
+
+    <record id="demo_bill_a101_next" model="lhc.bill">
+        <field name="doc_type">proforma</field>
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="period" eval="(DateTime.today() + relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="rent_amount">22000</field>
+        <field name="state">awaiting</field>
+        <field name="note">Issued ahead of the due date as a payment reminder.</field>
+    </record>
+
+    <record id="demo_bill_shop_next" model="lhc.bill">
+        <field name="doc_type">tax</field>
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_shop"/>
+        <field name="period" eval="(DateTime.today() + relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="rent_amount">49500</field>
+        <field name="state">awaiting</field>
+    </record>
+
+    <record id="demo_bill_shop_paid" model="lhc.bill">
+        <field name="doc_type">tax</field>
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_shop"/>
+        <field name="period" eval="(DateTime.today() - relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="rent_amount">49500</field>
+        <field name="state">paid</field>
+    </record>
+
+    <!-- ==============================================================
+         LEDGER — the credits action_approve() posts, stated explicitly
+         because the approvals above did not run through it.
+
+         One credit per approved receipt, plus a SEPARATE credit for the
+         TDS, which is what makes a TDS-deducted month settle to zero
+         instead of showing a permanent shortfall (spec 5.11).
+         ============================================================== -->
+
+    <record id="demo_ledger_a101_prev" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=1, day=4)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">receipt</field>
+        <field name="description" eval="'Rent Receipt %s' % (DateTime.today() - relativedelta(months=1)).strftime('%B %Y')"/>
+        <field name="receipt_id" ref="demo_receipt_a101_prev"/>
+        <field name="credit">22000</field>
+        <field name="is_closed_month" eval="True"/>
+    </record>
+
+    <record id="demo_ledger_a101_cur" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(day=4)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">receipt</field>
+        <field name="description" eval="'Rent Receipt %s' % DateTime.today().strftime('%B %Y')"/>
+        <field name="receipt_id" ref="demo_receipt_a101_cur"/>
+        <field name="credit">24400</field>
+    </record>
+
+    <record id="demo_ledger_shop_cur" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_shop"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(day=9)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">receipt</field>
+        <field name="description" eval="'Rent Receipt %s' % DateTime.today().strftime('%B %Y')"/>
+        <field name="receipt_id" ref="demo_receipt_shop_cur"/>
+        <field name="credit">53460</field>
+    </record>
+
+    <!-- The TDS half of that invoice: 58,410 total = 53,460 to bank + 4,950
+         credited by challan. Without this row the tenant looks short-paid. -->
+    <record id="demo_ledger_shop_tds" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_shop"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(day=9)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">tds</field>
+        <field name="description">TDS Credited (challan TDS/194I/Q2/00871)</field>
+        <field name="receipt_id" ref="demo_receipt_shop_cur"/>
+        <field name="credit">4950</field>
+    </record>
+
+    <!-- The rent that was due but only partly paid, so the ledger carries a
+         real outstanding balance rather than netting to zero everywhere. -->
+    <record id="demo_ledger_a101_due_partial" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=2, day=5)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">due</field>
+        <field name="description" eval="'Rent Due %s' % (DateTime.today() - relativedelta(months=2)).strftime('%B %Y')"/>
+        <field name="debit">22000</field>
+    </record>
+
+    <record id="demo_ledger_a101_partial" model="lhc.ledger.entry">
+        <field name="agreement_id" ref="lhc_nest_leasing.demo_agr_a101"/>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=2, day=7)).strftime('%Y-%m-%d')"/>
+        <field name="entry_type">receipt</field>
+        <field name="description">Rent Receipt — part payment</field>
+        <field name="receipt_id" ref="demo_receipt_a101_partial"/>
+        <field name="credit">18000</field>
+    </record>
+
+</odoo>

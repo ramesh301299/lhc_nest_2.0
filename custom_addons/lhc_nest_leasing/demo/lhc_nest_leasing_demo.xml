@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Four leases, one per state the workflow can be in: draft, active, active
+      after a renewal, and notice given. Between them they cover both receipt
+      types, both tenant kinds and both escalation shapes.
+
+      Rent is never written as a single number. base_rent, discount and
+      service_charge stay separate on lhc.agreement.version and payable_rent is
+      computed from the three (spec 4.1), so a demo record that pre-summed them
+      would be showing a figure the application cannot actually produce.
+
+      A renewal is a NEW version row, never an edit of the old one. The
+      renewed lease below therefore carries two versions with is_current
+      flipped, which is exactly what action_renew() writes.
+    -->
+
+    <!-- ==============================================================
+         1. RESIDENTIAL — active, non-GST, deposit collected in two
+            installments. The lease the receipts and ledger hang off.
+         ============================================================== -->
+
+    <record id="demo_agr_a101" model="lhc.agreement">
+        <field name="template_id" ref="lhc_nest_leasing.tmpl_residential"/>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_a101"/>
+        <field name="primary_tenant_id" ref="lhc_nest_tenants.demo_tenant_ravi"/>
+        <field name="billing_entity_id" ref="lhc_nest.entity_kumar"/>
+        <field name="escalation_pct">7.0</field>
+        <field name="escalation_frequency">2</field>
+        <field name="deposit_escalates" eval="False"/>
+        <field name="due_day">5</field>
+        <field name="notice_period_days">30</field>
+        <field name="lockin_months">11</field>
+        <field name="advance_total">100000</field>
+        <field name="state">active</field>
+        <field name="agreement_notes">Standard 11-month residential lease. Deposit
+agreed at ₹1,00,000, collected in two installments.</field>
+    </record>
+
+    <record id="demo_ver_a101" model="lhc.agreement.version">
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="sequence">1</field>
+        <field name="base_rent">24000</field>
+        <field name="discount">2000</field>
+        <field name="service_charge">0</field>
+        <field name="start_date" eval="(DateTime.today() - relativedelta(months=5, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.today() + relativedelta(months=6, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="escalation_method">init</field>
+        <field name="is_current" eval="True"/>
+        <field name="note">Opening term. ₹2,000 discount held for the first term
+as agreed at signing.</field>
+    </record>
+
+    <record id="demo_joint_a101" model="lhc.joint.tenant">
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="name">Priya Ravi</field>
+        <field name="relation">Wife</field>
+        <field name="mobile">+91 98410 77322</field>
+        <field name="aadhaar">5520 8891 2274</field>
+        <field name="pan">AVBPP7743J</field>
+    </record>
+
+    <record id="demo_adv_a101_1" model="lhc.advance.installment">
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="installment_no">1</field>
+        <field name="amount">60000</field>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=5, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="mode">neft</field>
+        <field name="reference">NEFT/AXIS/8841207</field>
+    </record>
+
+    <record id="demo_adv_a101_2" model="lhc.advance.installment">
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="installment_no">2</field>
+        <field name="amount">30000</field>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=3, day=12)).strftime('%Y-%m-%d')"/>
+        <field name="mode">upi</field>
+        <field name="reference">UPI/4471902238</field>
+    </record>
+
+    <!-- ₹10,000 still outstanding: advance_balance must read that, and the
+         vacate settlement must refund only what was actually collected. -->
+
+    <record id="demo_photo_a101_hall" model="lhc.unit.photo">
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_a101"/>
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="event_type">move_in</field>
+        <field name="room_label">Hall</field>
+        <field name="uploaded_date" eval="(DateTime.today() - relativedelta(months=5, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="damage_noted" eval="False"/>
+        <field name="note">Walls repainted before handover.</field>
+    </record>
+
+    <record id="demo_photo_a101_kitchen" model="lhc.unit.photo">
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_a101"/>
+        <field name="agreement_id" ref="demo_agr_a101"/>
+        <field name="event_type">move_in</field>
+        <field name="room_label">Kitchen</field>
+        <field name="uploaded_date" eval="(DateTime.today() - relativedelta(months=5, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="damage_noted" eval="True"/>
+        <field name="note">Chipped granite edge near the sink, noted at move-in
+so it is not charged at vacate.</field>
+    </record>
+
+    <!-- ==============================================================
+         2. COMMERCIAL — active, GST entity, company tenant.
+            This is the lease that produces Tax Invoices.
+         ============================================================== -->
+
+    <record id="demo_agr_shop" model="lhc.agreement">
+        <field name="template_id" ref="lhc_nest_leasing.tmpl_commercial"/>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_s01"/>
+        <field name="primary_tenant_id" ref="lhc_nest_tenants.demo_tenant_acme"/>
+        <field name="billing_entity_id" ref="lhc_nest.entity_soundarajan"/>
+        <field name="escalation_pct">10.0</field>
+        <field name="escalation_frequency">1</field>
+        <field name="deposit_escalates" eval="True"/>
+        <field name="due_day">10</field>
+        <field name="notice_period_days">90</field>
+        <field name="lockin_months">24</field>
+        <field name="advance_total">300000</field>
+        <field name="state">active</field>
+        <field name="agreement_notes">Commercial lease, GST applicable through
+Soundarajan Kumar. Renewed once at 10%.</field>
+    </record>
+
+    <!-- Superseded opening term: is_current False, exactly as action_renew()
+         leaves it. Kept so the version history on the form is not empty. -->
+    <record id="demo_ver_shop_1" model="lhc.agreement.version">
+        <field name="agreement_id" ref="demo_agr_shop"/>
+        <field name="sequence">1</field>
+        <field name="base_rent">40000</field>
+        <field name="discount">0</field>
+        <field name="service_charge">5000</field>
+        <field name="start_date" eval="(DateTime.today() - relativedelta(months=23, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.today() - relativedelta(months=12, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="escalation_method">init</field>
+        <field name="is_current" eval="False"/>
+        <field name="note">Opening term. Payable ₹45,000 = 40,000 base + 5,000
+service charge.</field>
+    </record>
+
+    <!-- Method A: 10% on the previous payable (45,000 -> 49,500), which is why
+         base carries the whole amount and the service charge is folded in. -->
+    <record id="demo_ver_shop_2" model="lhc.agreement.version">
+        <field name="agreement_id" ref="demo_agr_shop"/>
+        <field name="sequence">2</field>
+        <field name="base_rent">49500</field>
+        <field name="discount">0</field>
+        <field name="service_charge">0</field>
+        <field name="start_date" eval="(DateTime.today() - relativedelta(months=12, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.today() - relativedelta(months=1, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="escalation_method">A</field>
+        <field name="is_current" eval="True"/>
+        <field name="note">Renewed via Method A — 10% on the current payable.</field>
+    </record>
+
+    <!-- ==============================================================
+         3. NOTICE GIVEN — drives the vacate checklist and the
+            Expiring / Vacate dashboard cards.
+         ============================================================== -->
+
+    <record id="demo_agr_b201" model="lhc.agreement">
+        <field name="template_id" ref="lhc_nest_leasing.tmpl_residential"/>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_b201"/>
+        <field name="primary_tenant_id" ref="lhc_nest_tenants.demo_tenant_meena"/>
+        <field name="billing_entity_id" ref="lhc_nest.entity_vijila"/>
+        <field name="escalation_pct">7.0</field>
+        <field name="due_day">5</field>
+        <field name="notice_period_days">30</field>
+        <field name="advance_total">150000</field>
+        <field name="state">notice</field>
+        <field name="notice_date" eval="(DateTime.today() - relativedelta(days=12)).strftime('%Y-%m-%d')"/>
+        <field name="notice_reason">Relocating to Bengaluru for work.</field>
+        <field name="expected_vacate_date" eval="(DateTime.today() + relativedelta(days=18)).strftime('%Y-%m-%d')"/>
+        <field name="agreement_notes">Notice accepted. Lock-in already served.</field>
+    </record>
+
+    <record id="demo_ver_b201" model="lhc.agreement.version">
+        <field name="agreement_id" ref="demo_agr_b201"/>
+        <field name="sequence">1</field>
+        <field name="base_rent">32000</field>
+        <field name="discount">0</field>
+        <field name="service_charge">1500</field>
+        <field name="start_date" eval="(DateTime.today() - relativedelta(months=10, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.today() + relativedelta(months=1, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="escalation_method">init</field>
+        <field name="is_current" eval="True"/>
+    </record>
+
+    <record id="demo_adv_b201_1" model="lhc.advance.installment">
+        <field name="agreement_id" ref="demo_agr_b201"/>
+        <field name="installment_no">1</field>
+        <field name="amount">150000</field>
+        <field name="date" eval="(DateTime.today() - relativedelta(months=10, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="mode">neft</field>
+        <field name="reference">NEFT/CNRB/2290114</field>
+    </record>
+
+    <!-- Vacate checklist, still draft: one line per fixture on the unit, with
+         the watchman's condition graded against the move-in condition. The
+         wardrobe is graded worse than it went in, which is what puts a
+         deduction on the settlement. -->
+    <record id="demo_vacate_b201" model="lhc.vacate">
+        <field name="agreement_id" ref="demo_agr_b201"/>
+        <!-- lhc.vacate carries no date of its own; the handover date lives on
+             the agreement as expected_vacate_date. -->
+        <field name="rent_pending">0</field>
+        <field name="maint_cleared" eval="True"/>
+        <field name="rent_checked" eval="True"/>
+        <field name="key_handover" eval="False"/>
+        <field name="eb_final_reading" eval="False"/>
+        <field name="state">draft</field>
+    </record>
+
+    <record id="demo_vacate_line_wardrobe" model="lhc.vacate.line">
+        <field name="vacate_id" ref="demo_vacate_b201"/>
+        <field name="fixture_id" ref="lhc_nest_properties.demo_fixture_wardrobe"/>
+        <field name="name">Built-in Wardrobe (2 door)</field>
+        <field name="quantity">2</field>
+        <field name="move_in_condition">fair</field>
+        <field name="watchman_condition">damaged</field>
+        <field name="deduction">3500</field>
+        <field name="note">One shutter hinge pulled out of the board.</field>
+    </record>
+
+    <record id="demo_vacate_line_keys" model="lhc.vacate.line">
+        <field name="vacate_id" ref="demo_vacate_b201"/>
+        <field name="name">Main Door Keys (set of 3)</field>
+        <field name="quantity">3</field>
+        <field name="move_in_condition">new</field>
+        <field name="watchman_condition">missing</field>
+        <field name="deduction">900</field>
+        <field name="note">One set not returned; lock to be re-keyed.</field>
+    </record>
+
+    <record id="demo_vacate_line_geyser" model="lhc.vacate.line">
+        <field name="vacate_id" ref="demo_vacate_b201"/>
+        <field name="name">Bathroom Exhaust Fan</field>
+        <field name="quantity">1</field>
+        <field name="move_in_condition">good</field>
+        <field name="watchman_condition">good</field>
+        <field name="deduction">0</field>
+    </record>
+
+    <!-- ==============================================================
+         4. DRAFT — never confirmed, so the unit it names stays Booked
+            and the draft filter is not empty.
+         ============================================================== -->
+
+    <record id="demo_agr_a102_draft" model="lhc.agreement">
+        <field name="template_id" ref="lhc_nest_leasing.tmpl_residential"/>
+        <field name="property_id" ref="lhc_nest_properties.demo_prop_lakeview"/>
+        <field name="unit_id" ref="lhc_nest_properties.demo_unit_a102"/>
+        <field name="primary_tenant_id" ref="lhc_nest_tenants.demo_tenant_ravi"/>
+        <field name="billing_entity_id" ref="lhc_nest.entity_prakash"/>
+        <field name="due_day">5</field>
+        <field name="advance_total">120000</field>
+        <field name="state">draft</field>
+        <field name="agreement_notes">Drafted against the A-102 token booking.
+Awaiting the prospect's KYC before confirmation.</field>
+    </record>
+
+    <record id="demo_ver_a102" model="lhc.agreement.version">
+        <field name="agreement_id" ref="demo_agr_a102_draft"/>
+        <field name="sequence">1</field>
+        <field name="base_rent">26000</field>
+        <field name="start_date" eval="(DateTime.today() + relativedelta(months=1, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="end_date" eval="(DateTime.today() + relativedelta(months=12, day=1)).strftime('%Y-%m-%d')"/>
+        <field name="escalation_method">init</field>
+        <field name="is_current" eval="True"/>
+    </record>
+
+    <!-- ==============================================================
+         Occupancy, written last.
+
+         action_confirm() sets unit.status when a lease is confirmed, but these
+         leases are loaded straight into their end state rather than pushed
+         through the workflow (demo data loads as __system__, which holds no
+         LHC role and so cannot approve or renew). The unit statuses are
+         therefore stated here explicitly, and must match the lease states above.
+         ============================================================== -->
+
+    <record id="lhc_nest_properties.demo_unit_a101" model="lhc.unit">
+        <field name="status">occupied</field>
+    </record>
+
+    <record id="lhc_nest_properties.demo_unit_s01" model="lhc.unit">
+        <field name="status">occupied</field>
+    </record>
+
+    <record id="lhc_nest_properties.demo_unit_b201" model="lhc.unit">
+        <field name="status">notice</field>
+    </record>
+
+    <record id="lhc_nest_tenants.demo_tenant_ravi" model="lhc.tenant">
+        <field name="move_in_date" eval="(DateTime.today() - relativedelta(months=5, day=1)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="lhc_nest_tenants.demo_tenant_meena" model="lhc.tenant">
+        <field name="move_in_date" eval="(DateTime.today() - relativedelta(months=10, day=1)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="lhc_nest_tenants.demo_tenant_acme" model="lhc.tenant">
+        <field name="move_in_date" eval="(DateTime.today() - relativedelta(months=23, day=1)).strftime('%Y-%m-%d')"/>
+    </record>
+
+</odoo>

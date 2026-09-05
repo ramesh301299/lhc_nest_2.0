@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="wa_reminder" model="lhc.wa.template">
+        <field name="name">Rent Reminder</field>
+        <field name="template_type">reminder</field>
+        <field name="body">Dear {tenant}, this is a gentle reminder that rent of {amount} for unit {unit} is due on {due_date}. Kindly arrange the payment. Thank you — Lovely Home Creators.</field>
+    </record>
+    <record id="wa_renewal" model="lhc.wa.template">
+        <field name="name">Renewal Reminder</field>
+        <field name="template_type">renewal</field>
+        <field name="body">Dear {tenant}, your agreement for unit {unit} is expiring on {end_date}. Please contact us to renew. Thank you — Lovely Home Creators.</field>
+    </record>
+    <record id="wa_receipt" model="lhc.wa.template">
+        <field name="name">Receipt Confirmation</field>
+        <field name="template_type">receipt</field>
+        <field name="body">Dear {tenant}, we have received {amount} towards rent for unit {unit}. Receipt No: {receipt_no}. Thank you — Lovely Home Creators.</field>
+    </record>
+</odoo>

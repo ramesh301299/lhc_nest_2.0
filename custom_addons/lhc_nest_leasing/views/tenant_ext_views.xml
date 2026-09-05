@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lease-derived state, put back onto the tenant and unit screens.
+
+  lhc_nest_tenants and lhc_nest_properties deliberately ship without these
+  fields so they can install on their own. Leasing owns the fields (see
+  models/lease_backrefs.py) and therefore owns the view changes that surface
+  them — the same split Odoo uses when `sale` adds an Invoices tab to a
+  partner form.
+
+  Install leasing and the columns appear; uninstall it and they disappear
+  along with the fields, leaving the masters intact.
+-->
+<odoo>
+
+    <!-- ============ TENANT ============ -->
+    <record id="view_lhc_tenant_list_leasing" model="ir.ui.view">
+        <field name="name">lhc.tenant.list.leasing</field>
+        <field name="model">lhc.tenant</field>
+        <field name="inherit_id" ref="lhc_nest_tenants.view_lhc_tenant_list"/>
+        <field name="arch" type="xml">
+            <field name="tenant_type" position="before">
+                <field name="current_unit_id"/>
+            </field>
+            <field name="tenant_type" position="after">
+                <field name="status" widget="badge"
+                       decoration-success="status=='active'"
+                       decoration-warning="status=='notice'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_lhc_tenant_form_leasing" model="ir.ui.view">
+        <field name="name">lhc.tenant.form.leasing</field>
+        <field name="model">lhc.tenant</field>
+        <field name="inherit_id" ref="lhc_nest_tenants.view_lhc_tenant_form"/>
+        <field name="arch" type="xml">
+            <field name="move_in_date" position="after">
+                <field name="current_unit_id"/>
+                <field name="status"/>
+            </field>
+            <!-- Anchored on <sheet>, not on a group's string: Odoo 18 rejects
+                 @string as an inheritance selector, and a label is the most
+                 fragile thing to key on anyway. -->
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Agreements">
+                        <field name="agreement_ids" readonly="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="unit_id"/>
+                                <field name="payable_rent"/>
+                                <field name="end_date"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============ UNIT ============ -->
+    <record id="view_lhc_unit_list_leasing" model="ir.ui.view">
+        <field name="name">lhc.unit.list.leasing</field>
+        <field name="model">lhc.unit</field>
+        <field name="inherit_id" ref="lhc_nest_properties.view_lhc_unit_list"/>
+        <field name="arch" type="xml">
+            <field name="own_eb_no" position="after">
+                <field name="current_tenant_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_lhc_unit_form_leasing" model="ir.ui.view">
+        <field name="name">lhc.unit.form.leasing</field>
+        <field name="model">lhc.unit</field>
+        <field name="inherit_id" ref="lhc_nest_properties.view_lhc_unit_form"/>
+        <field name="arch" type="xml">
+            <field name="boundaries" position="after">
+                <field name="current_agreement_id"/>
+                <field name="current_tenant_id"/>
+            </field>
+            <xpath expr="//notebook" position="inside">
+                <page string="Agreements">
+                    <field name="agreement_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="primary_tenant_id"/>
+                            <field name="payable_rent"/>
+                            <field name="end_date"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The property form's embedded unit list shows each unit's tenant. -->
+    <record id="view_lhc_property_form_leasing" model="ir.ui.view">
+        <field name="name">lhc.property.form.leasing</field>
+        <field name="model">lhc.property</field>
+        <field name="inherit_id" ref="lhc_nest_properties.view_lhc_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='unit_ids']/list/field[@name='own_eb_no']" position="after">
+                <field name="current_tenant_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Unit grid: show who is in the unit, not just its status. -->
+    <record id="view_lhc_unit_kanban_leasing" model="ir.ui.view">
+        <field name="name">lhc.unit.kanban.leasing</field>
+        <field name="model">lhc.unit</field>
+        <field name="inherit_id" ref="lhc_nest_properties.view_lhc_unit_kanban"/>
+        <field name="arch" type="xml">
+            <field name="code" position="after">
+                <field name="current_tenant_id"/>
+            </field>
+            <xpath expr="//span[hasclass('lhc-unit-sub')]" position="replace">
+                <span class="lhc-unit-sub">
+                    <t t-if="record.current_tenant_id.value">
+                        <t t-esc="record.current_tenant_id.value"/>
+                    </t>
+                    <t t-else="">
+                        <field name="status"/>
+                    </t>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

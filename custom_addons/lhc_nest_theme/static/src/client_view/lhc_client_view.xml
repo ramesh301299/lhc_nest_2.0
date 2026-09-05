@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t t-name="lhc_nest_theme.ClientView">
+        <div class="lhc-cv">
+
+            <!-- Header: title, record count, and the primary action. -->
+            <div class="lhc-cv-head">
+                <div class="lhc-cv-title">
+                    <span class="lhc-cv-icon" t-if="icon" t-esc="icon"/>
+                    <div>
+                        <h1 t-if="state.mode === 'list'" t-esc="title"/>
+                        <h1 t-else="" t-esc="recordTitle"/>
+                        <div class="lhc-cv-sub">
+                            <t t-if="state.mode === 'list'">
+                                <t t-esc="state.total"/> record<t t-if="state.total !== 1">s</t>
+                            </t>
+                            <t t-else="" t-esc="title"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lhc-cv-actions">
+                    <t t-if="state.mode === 'list'">
+                        <button class="lhc-btn lhc-btn-primary" t-on-click="startCreate">
+                            <span aria-hidden="true">＋</span> Create
+                        </button>
+                    </t>
+                    <t t-else="">
+                        <button class="lhc-btn" t-on-click="backToList">← Back</button>
+                        <t t-if="state.editing">
+                            <button class="lhc-btn" t-on-click="cancelEdit">Cancel</button>
+                            <button class="lhc-btn lhc-btn-primary"
+                                    t-att-disabled="state.saving"
+                                    t-on-click="save">
+                                <t t-if="state.saving">Saving…</t>
+                                <t t-else="">Save</t>
+                            </button>
+                        </t>
+                        <t t-else="">
+                            <button class="lhc-btn lhc-btn-danger"
+                                    t-if="state.recordId"
+                                    t-on-click="deleteRecord">Delete</button>
+                            <button class="lhc-btn lhc-btn-primary" t-on-click="startEdit">Edit</button>
+                        </t>
+                    </t>
+                </div>
+            </div>
+
+            <!-- Errors come from the server: access, validation, constraints.
+                 Shown as written rather than replaced with something vaguer. -->
+            <div class="lhc-cv-error" t-if="state.error">
+                <strong>Could not complete that.</strong>
+                <span t-esc="state.error"/>
+            </div>
+
+            <!-- LIST -->
+            <t t-if="state.mode === 'list'">
+                <div class="lhc-cv-toolbar">
+                    <input type="search" class="lhc-cv-search"
+                           placeholder="Search…"
+                           t-att-value="state.search"
+                           t-on-input="onSearchInput"/>
+                    <div class="lhc-cv-pager" t-if="state.total">
+                        <span class="lhc-cv-range">
+                            <t t-esc="pageStart"/>–<t t-esc="pageEnd"/> of <t t-esc="state.total"/>
+                        </span>
+                        <button class="lhc-btn lhc-btn-icon" t-att-disabled="!canPrev"
+                                t-on-click="prevPage" aria-label="Previous page">‹</button>
+                        <button class="lhc-btn lhc-btn-icon" t-att-disabled="!canNext"
+                                t-on-click="nextPage" aria-label="Next page">›</button>
+                    </div>
+                </div>
+
+                <div class="lhc-cv-loading" t-if="state.loading">Loading…</div>
+
+                <t t-elif="!state.records.length">
+                    <div class="lhc-cv-empty">
+                        <div class="lhc-cv-empty-mark" aria-hidden="true">◍</div>
+                        <p t-if="state.search">Nothing matches “<t t-esc="state.search"/>”.</p>
+                        <p t-else="">No records yet. Create the first one.</p>
+                    </div>
+                </t>
+
+                <t t-else="">
+                    <!-- The table scrolls inside its own container so the page
+                         itself never scrolls sideways on a phone. -->
+                    <div class="lhc-cv-tablewrap">
+                        <table class="lhc-cv-table">
+                            <thead>
+                                <tr>
+                                    <t t-foreach="columns" t-as="col" t-key="col">
+                                        <th t-on-click="() => this.sortBy(col)"
+                                            t-att-class="{ 'lhc-sorted': state.orderBy === col }">
+                                            <span t-esc="label(col)"/>
+                                            <span class="lhc-sort" t-if="state.orderBy === col"
+                                                  t-esc="state.orderAsc ? '▲' : '▼'"/>
+                                        </th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="state.records" t-as="record" t-key="record.id">
+                                    <tr t-on-click="() => this.openRecord(record)">
+                                        <t t-foreach="columns" t-as="col" t-key="col">
+                                            <td t-att-class="'lhc-t-' + type(col)"
+                                                t-att-data-label="label(col)">
+                                                <span t-esc="display(record, col)"/>
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+
+            <!-- FORM -->
+            <t t-else="">
+                <div class="lhc-cv-loading" t-if="state.loading">Loading…</div>
+                <t t-else="">
+                    <!-- Notebook pages from the model's own form view become
+                         tabs, so the LHC screen keeps the grouping the model
+                         was designed with. -->
+                    <div class="lhc-cv-tabs" t-if="tabs.length > 1">
+                        <t t-foreach="tabs" t-as="tab" t-key="tab.name">
+                            <button class="lhc-cv-tab"
+                                    t-att-class="{ 'lhc-active': state.activeTab === tab_index }"
+                                    t-on-click="() => this.state.activeTab = tab_index">
+                                <t t-esc="tab.name"/>
+                            </button>
+                        </t>
+                    </div>
+
+                    <div class="lhc-cv-card">
+                        <t t-foreach="tabs" t-as="tab" t-key="tab.name">
+                            <div class="lhc-cv-grid" t-if="state.activeTab === tab_index">
+                                <t t-foreach="tab.fields" t-as="name" t-key="name">
+                                    <div class="lhc-cv-field"
+                                         t-att-class="{ 'lhc-wide': ['text','html','one2many','many2many'].includes(type(name)) }">
+                                        <label t-esc="label(name)"/>
+
+                                        <!-- Read mode, or a field Odoo says is
+                                             not writable — shown, never faked
+                                             as an editable input. -->
+                                        <t t-if="!isEditable(name)">
+                                            <div class="lhc-cv-value"
+                                                 t-esc="display(state.values, name)"/>
+                                        </t>
+
+                                        <t t-elif="type(name) === 'boolean'">
+                                            <label class="lhc-cv-check">
+                                                <input type="checkbox"
+                                                       t-att-checked="state.values[name]"
+                                                       t-on-change="(ev) => this.onInput(name, ev)"/>
+                                                <span>Yes</span>
+                                            </label>
+                                        </t>
+
+                                        <t t-elif="type(name) === 'selection'">
+                                            <select class="lhc-cv-input"
+                                                    t-on-change="(ev) => this.onInput(name, ev)">
+                                                <option value="">—</option>
+                                                <t t-foreach="selectionOptions(name)" t-as="opt" t-key="opt[0]">
+                                                    <option t-att-value="opt[0]"
+                                                            t-att-selected="state.values[name] === opt[0]"
+                                                            t-esc="opt[1]"/>
+                                                </t>
+                                            </select>
+                                        </t>
+
+                                        <t t-elif="type(name) === 'many2one'">
+                                            <!-- Typing queries name_search on the
+                                                 related model, so the options are
+                                                 real records the user may see. -->
+                                            <input class="lhc-cv-input"
+                                                   t-att-list="'dl-' + name"
+                                                   t-att-value="inputValue(name)"
+                                                   t-on-input="(ev) => this.onM2oInput(name, ev)"
+                                                   t-on-change="(ev) => this.onM2oChange(name, ev)"
+                                                   placeholder="Type to search…"/>
+                                            <datalist t-att-id="'dl-' + name">
+                                                <t t-foreach="m2oOptions(name)" t-as="opt" t-key="opt.id">
+                                                    <option t-att-value="opt.label"/>
+                                                </t>
+                                            </datalist>
+                                        </t>
+
+                                        <t t-elif="type(name) === 'text'">
+                                            <textarea class="lhc-cv-input" rows="4"
+                                                      t-att-value="inputValue(name)"
+                                                      t-on-input="(ev) => this.onInput(name, ev)"/>
+                                        </t>
+
+                                        <t t-elif="type(name) === 'date'">
+                                            <input type="date" class="lhc-cv-input"
+                                                   t-att-value="inputValue(name)"
+                                                   t-on-input="(ev) => this.onInput(name, ev)"/>
+                                        </t>
+
+                                        <t t-elif="['integer','float','monetary'].includes(type(name))">
+                                            <input type="number" class="lhc-cv-input"
+                                                   t-att-step="type(name) === 'integer' ? 1 : 0.01"
+                                                   t-att-value="inputValue(name)"
+                                                   t-on-input="(ev) => this.onInput(name, ev)"/>
+                                        </t>
+
+                                        <t t-else="">
+                                            <input type="text" class="lhc-cv-input"
+                                                   t-att-value="inputValue(name)"
+                                                   t-on-input="(ev) => this.onInput(name, ev)"/>
+                                        </t>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Money menus. -->
+<odoo>
+    <menuitem id="menu_lhc_approvals" name="Receipt Approvals" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_approval_queue"
+              sequence="10"/>
+    <menuitem id="menu_lhc_dues" name="Due / Pending Rent" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_dues"
+              sequence="20"/>
+    <menuitem id="menu_lhc_ledger" name="Tenant Ledger" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_ledger"
+              sequence="30"/>
+    <menuitem id="menu_lhc_maintenance" name="Maintenance / Expenses" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_maintenance"
+              sequence="50"/>
+    <menuitem id="menu_lhc_bills" name="Bill Before Payment" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_bill"
+              sequence="60"/>
+    <menuitem id="menu_lhc_monthly_run" name="Monthly Billing Run" parent="lhc_nest.menu_lhc_money_grp"
+              action="action_lhc_monthly_run"
+              sequence="70"/>
+    <menuitem id="menu_lhc_quick_receipt" name="Post Receipt" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_receipt"
+              sequence="10"/>
+    <menuitem id="menu_lhc_quick_bill" name="Bill Before Payment" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_bill"
+              sequence="20"/>
+    <menuitem id="menu_lhc_quick_maint" name="Maintenance / Expense" parent="lhc_nest.menu_lhc_quick"
+              action="action_lhc_maintenance"
+              sequence="60"/>
+</odoo>

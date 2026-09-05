@@ -1,0 +1,191 @@
+// ===========================================================================
+// LHC NEST — application shell.
+//
+// The sidebar is fixed-position and the webclient is offset to clear it. That
+// is deliberately less invasive than restructuring Odoo's flex tree: the
+// webclient keeps its own column layout and scroll containment, and removing
+// this addon removes the offset with it.
+//
+// SCOPING, and it changed on purpose. Shell GEOMETRY — the sidebar offset, the
+// merged app bar — is scoped to `body.lhc-shell`, a class the sidebar sets only
+// for a user who has LHC NEST. Shell SURFACE — the page wash, the card ground —
+// is not scoped at all, and neither are the component sheets that follow.
+//
+// The reason is the "Odoo Menus" door. Contacts, CRM, Project and Settings are
+// reached from the LHC rail and are part of the same product from where the
+// user is standing; leaving them on stock white made stepping into one feel
+// like leaving the application. One design, every screen.
+// ===========================================================================
+
+// NOTE ON THE SELECTOR: Odoo puts `o_web_client` on <body> itself, not on a
+// child element — the body carries both classes ("o_web_client lhc-shell"). A
+// descendant selector like `body.lhc-shell .o_web_client` therefore matches
+// nothing at all. The offset has to go on the body.
+body.lhc-shell {
+    padding-left: var(--lhc-sidebar-w);
+}
+
+// ---- The ground ----------------------------------------------------------
+// Unscoped: every backend screen sits on the same wash, whichever app drew it.
+body.o_web_client {
+    background: var(--lhc-bg);
+
+    .o_action_manager {
+        background: var(--lhc-bg);
+    }
+
+    // The action area is the page. Individual views paint their own white
+    // surfaces on top of it.
+    .o_content {
+        padding: var(--lhc-pad);
+        background: var(--lhc-bg);
+    }
+
+    // Odoo's own view containers default to white, which would punch a card
+    // shape through the wash before the view has drawn one of its own.
+    .o_view_controller,
+    .o_action,
+    .o_form_view_container {
+        background: transparent;
+    }
+}
+
+// Inside LHC NEST, Odoo's horizontal section menus and app brand duplicate the
+// sidebar, which lists the same `ir.ui.menu` records. Two controls for one job,
+// and the sections strip in particular fights the sidebar name for name.
+//
+// Hidden, not removed: the menus themselves are untouched, still reachable from
+// the sidebar, and still governed by their own `groups=`.
+body.lhc-shell:not(.lhc-foreign-app) {
+    .o_main_navbar .o_menu_sections,
+    .o_main_navbar .o_menu_brand {
+        display: none !important;
+    }
+}
+
+// ---- Odoo's own applications --------------------------------------------
+// A foreign app keeps the LHC ground and every LHC component, but gets its own
+// navigation back: the sidebar only knows LHC NEST menus, so without the
+// sections strip there is no way to move around inside Contacts or Settings.
+//
+// The strip is given a real row again (appbar.scss collapses the header to
+// zero height for the merged bar) and painted in the rail's navy, so it reads
+// as the same chrome rather than as a second, paler application.
+body.lhc-shell.lhc-foreign-app {
+    > header.o_navbar {
+        height: auto;
+        min-height: var(--lhc-appbar-h);
+        pointer-events: auto;
+        background: var(--lhc-grad-navy);
+        box-shadow: 0 2px 10px rgba(15, 15, 30, .14);
+
+        .o_main_navbar {
+            position: static;
+            width: 100%;
+            min-height: var(--lhc-appbar-h);
+            height: auto;
+            padding-right: clamp(10px, 1vw, 18px);
+            background: transparent;
+        }
+    }
+
+    .o_menu_brand {
+        color: #fff;
+        font-weight: 650;
+        letter-spacing: -.01em;
+    }
+
+    // The control panel below it is the light one every other screen has, so
+    // the row above must not also try to be the app bar.
+    .o_control_panel {
+        padding-right: clamp(12px, 1.2vw, 22px) !important;
+    }
+}
+
+// ===========================================================================
+// EVERY SCREEN SCROLLS.
+//
+// Odoo declares, at `html .o_web_client > .o_action_manager > .o_action`:
+//
+//     height: 100%; display: flex; flex-flow: column nowrap; overflow: hidden;
+//
+// A regular list or form is fine with that — Odoo gives them an inner
+// `.o_content` that carries the scroll. A CLIENT ACTION has no `.o_content`:
+// its component root IS the `.o_action`, so `overflow: hidden` is the last
+// word and everything past the fold is simply clipped. That is why the
+// dashboard's action-alert list ran off the bottom of the screen with no
+// scrollbar to reach it.
+//
+// The sheets for those screens did each say `overflow: auto`, but as
+// `body.lhc-shell .o_lhc_dashboard` — specificity (0,3,1) against Odoo's
+// (0,3,1)... on the losing side of the tie once Odoo's rule is read as the
+// more specific chain it is. Naming the element's own `.o_action` class here
+// takes it to (0,4,1) and settles it outright rather than by load order.
+//
+// `display: block` matters as much as the overflow: as a nowrap flex column
+// these children would compress against each other instead of overflowing,
+// so the box would never have anything to scroll.
+body.o_web_client .o_action_manager {
+
+    > .o_action.o_lhc_dashboard,
+    > .o_action.lhc-qe {
+        display: block;
+        overflow: auto;
+    }
+
+    // The client view's root carries no `.o_action` class of its own, so it
+    // inherits no height at all from the chain above and simply overflows the
+    // manager, which clips it. It needs the full set.
+    > .lhc-cv {
+        height: 100%;
+        display: block;
+        overflow: auto;
+    }
+
+    // Momentum scrolling on iOS/iPadOS for all three.
+    > .o_action.o_lhc_dashboard,
+    > .o_action.lhc-qe,
+    > .lhc-cv {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+// ---- Below the breakpoint: the sidebar goes off-canvas -------------------
+@media (max-width: 820px) {
+    body.lhc-shell {
+        padding-left: 0;
+    }
+
+    body.o_web_client .o_content {
+        padding: 14px;
+    }
+}
+
+// ---- Print ---------------------------------------------------------------
+// Chrome out, content only. Somebody will print a list view, and it should not
+// come out as a screenshot of a navigation bar.
+@media print {
+    body.lhc-shell {
+        padding-left: 0 !important;
+
+        .lhc-sidebar,
+        .lhc-sidebar-overlay,
+        .lhc-hamburger,
+        .o_main_navbar,
+        .o_control_panel .o_cp_buttons,
+        .o_searchview,
+        .oe_button_box,
+        .o-mail-Form-chatter {
+            display: none !important;
+        }
+
+        .o_content {
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        .o_list_view .o_data_row {
+            page-break-inside: avoid;
+        }
+    }
+}

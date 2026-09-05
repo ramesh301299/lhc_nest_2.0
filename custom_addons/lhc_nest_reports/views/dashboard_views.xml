@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_receipt_graph" model="ir.ui.view">
+        <field name="name">lhc.receipt.graph</field>
+        <field name="model">lhc.receipt</field>
+        <field name="arch" type="xml">
+            <graph string="Collection" type="bar">
+                <field name="receipt_date" interval="month"/>
+                <field name="billing_entity_id"/>
+                <field name="amount_received_bank" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- The OWL dashboard. Every figure is fetched from
+         lhc.dashboard.get_dashboard_data at render time and each card carries
+         the action that opens its records — nothing here is static.
+         The client tag stays "lhc_nest.dashboard": it is the registry key the
+         JS registers under, and renaming it would only break the action. -->
+    <record id="action_lhc_dashboard_cards" model="ir.actions.client">
+        <field name="name">Dashboard</field>
+        <field name="tag">lhc_nest.dashboard</field>
+    </record>
+
+    <record id="action_lhc_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('state','=','approved')]</field>
+        <field name="view_id" ref="view_lhc_receipt_graph"/>
+    </record>
+
+    <record id="action_lhc_profitability" model="ir.actions.act_window">
+        <field name="name">Profitability</field>
+        <field name="res_model">lhc.receipt</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="domain">[('state','=','approved')]</field>
+        <field name="view_id" ref="view_lhc_receipt_pivot"/>
+    </record>
+</odoo>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="lhc_nest.Dashboard">
+        <div class="o_lhc_dashboard o_action">
+
+            <!-- ============ LOADING ============ -->
+            <!-- Skeletons rather than a spinner: the layout is already known,
+                 so the page holds its shape while the figures land instead of
+                 jumping when they arrive. -->
+            <t t-if="state.loading">
+                <div class="o_lhc_head">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <div class="o_lhc_sub">Loading…</div>
+                    </div>
+                </div>
+                <div class="o_lhc_cards">
+                    <t t-foreach="[1,2,3,4,5]" t-as="n" t-key="n">
+                        <div class="o_lhc_card lhc-skeleton lhc-skeleton-card"/>
+                    </t>
+                </div>
+                <div class="o_lhc_cards">
+                    <t t-foreach="[1,2,3,4]" t-as="n" t-key="n">
+                        <div class="o_lhc_card lhc-skeleton lhc-skeleton-card"/>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ============ ERROR ============ -->
+            <t t-elif="state.error">
+                <div class="o_lhc_head"><div><h1>Dashboard</h1></div></div>
+                <div class="o_lhc_state o_lhc_state_error">
+                    <div class="o_lhc_state_icon"><i class="fa fa-exclamation-triangle" aria-hidden="true"/></div>
+                    <div class="o_lhc_state_title">The dashboard could not be loaded</div>
+                    <div class="o_lhc_state_text" t-esc="state.error"/>
+                    <button class="btn btn-primary" t-on-click="() => this.load()">Try again</button>
+                </div>
+            </t>
+
+            <!-- ============ LOADED ============ -->
+            <t t-else="">
+                <div class="o_lhc_head">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <div class="o_lhc_sub">
+                            <t t-esc="state.data.company"/> · <t t-esc="state.data.period"/>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm o_lhc_refresh"
+                            t-on-click="() => this.load()">Refresh</button>
+                </div>
+
+                <t t-set="groups"
+                   t-value="[['portfolio','Portfolio'],['money','Collection'],['action','Needs Attention']]"/>
+                <t t-foreach="groups" t-as="grp" t-key="grp[0]">
+                    <t t-set="cards" t-value="cardsIn(grp[0])"/>
+                    <div t-if="cards.length" class="o_lhc_section">
+                        <div class="o_lhc_section_title"><t t-esc="grp[1]"/></div>
+                        <div class="o_lhc_cards">
+                            <div t-foreach="cards" t-as="card" t-key="card.key"
+                                 t-attf-class="o_lhc_card {{ card.tone ? 'o_lhc_' + card.tone : '' }} {{ card.action ? 'o_lhc_clickable' : '' }}"
+                                 t-att-role="card.action ? 'button' : null"
+                                 t-att-tabindex="card.action ? 0 : null"
+                                 t-on-click="() => this.openCard(card)"
+                                 t-on-keydown="(ev) => this.onCardKeydown(ev, card)">
+                                <!-- Label first, then the figure: the reference
+                                     leads with what the number means. -->
+                                <div class="o_lhc_card_head">
+                                    <span class="o_lhc_card_label" t-esc="card.label"/>
+                                    <span class="o_lhc_card_icon" aria-hidden="true">
+                                        <i t-att-class="'fa ' + (card.icon or 'fa-circle-o')"/>
+                                    </span>
+                                </div>
+                                <div class="o_lhc_card_value" t-esc="displayValue(card)"/>
+                                <div class="o_lhc_card_sub" t-esc="card.sub || ''"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="o_lhc_panels">
+                    <div class="o_lhc_panel">
+                        <div class="o_lhc_section_title">Action Alerts</div>
+                        <t t-set="alerts" t-value="alertCards()"/>
+                        <t t-if="alerts.length">
+                            <div t-foreach="alerts" t-as="a" t-key="a.key"
+                                 t-attf-class="o_lhc_alert o_lhc_alert_{{ a.tone || 'info' }} {{ a.action ? 'o_lhc_clickable' : '' }}"
+                                 t-att-role="a.action ? 'button' : null"
+                                 t-att-tabindex="a.action ? 0 : null"
+                                 t-on-click="() => this.openCard(a)"
+                                 t-on-keydown="(ev) => this.onCardKeydown(ev, a)">
+                                <span class="o_lhc_alert_icon" aria-hidden="true" t-esc="a.icon"/>
+                                <span class="o_lhc_alert_text">
+                                    <strong t-esc="a.value"/> <t t-esc="a.label"/>
+                                </span>
+                            </div>
+                        </t>
+                        <div t-else="" class="o_lhc_state o_lhc_state_empty">
+                            <div class="o_lhc_state_icon">✅</div>
+                            <div class="o_lhc_state_title">Nothing needs attention</div>
+                            <div class="o_lhc_state_text">No overdue rent, expiring agreements or pending approvals.</div>
+                        </div>
+                    </div>
+
+                    <!-- Admin-only: the server returns an empty list otherwise. -->
+                    <div class="o_lhc_panel" t-if="state.data.is_admin">
+                        <div class="o_lhc_section_title">Collection by Billing Entity</div>
+                        <div t-if="state.data.entities.length" class="o_lhc_table_wrap">
+                            <table class="table table-sm o_lhc_table">
+                                <thead>
+                                    <tr><th>Entity</th><th class="text-end">Due</th>
+                                        <th class="text-end">Received</th>
+                                        <th class="text-end">Pending</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="state.data.entities" t-as="row" t-key="row.name">
+                                        <td><span class="o_lhc_pill" t-esc="row.name"/></td>
+                                        <td class="text-end" t-esc="formatAmount(row.due)"/>
+                                        <td class="text-end o_lhc_received" t-esc="formatAmount(row.received)"/>
+                                        <td class="text-end o_lhc_pending" t-esc="formatAmount(row.pending)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div t-else="" class="o_lhc_state o_lhc_state_empty">
+                            <div class="o_lhc_state_icon">🏦</div>
+                            <div class="o_lhc_state_title">No collection yet this period</div>
+                            <div class="o_lhc_state_text">Entities appear once an agreement is due or a receipt is posted.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div t-if="state.data.overdue_tenants.length" class="o_lhc_panel">
+                    <div class="o_lhc_section_title">Overdue — Follow Up</div>
+                    <div class="o_lhc_table_wrap">
+                        <table class="table table-sm o_lhc_table">
+                            <thead>
+                                <tr><th>Tenant</th><th>Unit</th><th>Due Since</th>
+                                    <th class="text-end">Shortfall</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="state.data.overdue_tenants" t-as="row" t-key="row.id"
+                                    class="o_lhc_clickable" role="button" tabindex="0"
+                                    t-on-click="() => this.openAgreement(row)"
+                                    t-on-keydown="(ev) => this.onRowKeydown(ev, row)">
+                                    <td t-esc="row.tenant"/>
+                                    <td t-esc="row.unit"/>
+                                    <td t-esc="row.due_since"/>
+                                    <td class="text-end o_lhc_pending" t-esc="formatAmount(row.amount)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

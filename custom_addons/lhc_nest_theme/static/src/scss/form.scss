@@ -1,0 +1,601 @@
+// ===========================================================================
+// LHC NEST — form and detail views.
+//
+// The sheet becomes a soft-shadowed rounded card floating on the page wash.
+// Labels are sentence-case and quiet, section headings are uppercase and
+// tracked, notebook tabs are underlined, and every input carries a real border
+// plus a navy focus ring.
+//
+// No field is moved, hidden or reordered here — this restyles the containers
+// the existing views already declare.
+// ===========================================================================
+
+.o_form_view {
+
+    // --- The sheet as a card ---------------------------------------------
+    .o_form_sheet_bg {
+        background: var(--lhc-bg);
+        border-bottom: 0;
+        padding: var(--lhc-space-6) var(--lhc-space-4);
+
+        > .o_form_sheet {
+            background: var(--lhc-surface);
+            border: 1px solid var(--lhc-border);
+            border-radius: var(--lhc-radius-lg);
+            box-shadow: var(--lhc-shadow);
+            max-width: 1180px;
+            padding: clamp(18px, 1.7vw, 30px);
+        }
+    }
+
+    // --- Title ------------------------------------------------------------
+    .oe_title {
+        h1,
+        .o_field_char input {
+            font-size: var(--lhc-fs-hero);
+            font-weight: 700;
+            letter-spacing: -.3px;
+            color: var(--lhc-navy);
+        }
+    }
+
+    // --- Field labels -----------------------------------------------------
+    // 12px/600 in the body colour, sentence case. Deliberately NOT the 11px
+    // uppercase muted treatment: that is the *section* label — a different
+    // component that heads a group of fields. Using it on every field shouts
+    // all of them and leaves nothing to mark a section.
+    .o_form_label,
+    .o_inner_group > div > label,
+    label.o_form_label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--lhc-ink);
+        margin-bottom: 5px;
+    }
+
+    // Required fields get a red asterisk rather than a colour shift on the
+    // label, which would be the only cue and fails on its own.
+    .o_form_label.o_field_required::after,
+    .o_inner_group > div > label.o_field_required::after,
+    .o_required_modifier > .o_form_label::after,
+    label.o_form_label.o_required_modifier::after {
+        content: " *";
+        color: var(--lhc-red);
+        font-weight: 700;
+    }
+
+    // --- Values -----------------------------------------------------------
+    .o_field_widget {
+        font-size: 13px;
+        color: var(--lhc-ink);
+
+        .o_field_monetary input,
+        .o_field_monetary span,
+        .o_field_float input,
+        .o_field_integer input {
+            font-variant-numeric: tabular-nums;
+        }
+
+        // A readonly field reads as text, not as a disabled box. A greyed
+        // input still looks like something you failed to click into.
+        &.o_readonly_modifier .o_input {
+            border-color: transparent;
+            background: transparent;
+            padding-left: 0;
+        }
+    }
+
+    // --- Section headings -------------------------------------------------
+    .o_horizontal_separator,
+    .lhc-section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--lhc-muted-2);
+        border-bottom: 0;
+        margin-bottom: var(--lhc-space-2);
+    }
+
+    // ======================================================================
+    // The form header — one pattern, every form.
+    //
+    // Odoo puts two unrelated things in this bar: the workflow buttons on the
+    // left and the stage progression on the right. Left alone they drift —
+    // buttons at three heights because each carries a different Bootstrap
+    // class, a stage strip floating wherever the buttons happen to stop, and a
+    // row that wraps into two on a narrow screen with no rhythm to the wrap.
+    //
+    // What follows fixes the SHAPE of the bar rather than the contents of any
+    // one form: every button is the same height, radius and weight; the stage
+    // strip is pinned to the far end so "where am I" is always in the same
+    // place; and a destructive action is set apart so Reject is never simply
+    // the next button along from Approve.
+    // ======================================================================
+    .o_form_statusbar {
+        display: flex;
+        align-items: center;
+        gap: var(--lhc-space-4);
+        flex-wrap: wrap;
+        row-gap: var(--lhc-space-2);
+        background: var(--lhc-surface);
+        border-bottom: 1px solid var(--lhc-border);
+        padding: var(--lhc-space-2) clamp(14px, 1.6vw, 26px);
+        min-height: 50px;
+
+        .o_statusbar_buttons {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--lhc-space-2);
+            margin: 0;
+
+            > .btn {
+                height: 32px;
+                min-height: 32px;
+                padding: 0 12px;
+                margin: 0;
+                border-radius: var(--lhc-radius-btn);
+                font-size: 12.5px;
+                font-weight: 600;
+                line-height: 1;
+                // A button whose label wraps is a button that changes the
+                // height of the whole bar.
+                white-space: nowrap;
+            }
+
+            > .btn > .o_button_icon,
+            > .btn > i { font-size: 12px; margin: 0; }
+
+            // Destructive actions are set apart with a hairline.
+            > .btn-danger,
+            > .btn-outline-danger,
+            > .btn[special="cancel"],
+            > .btn[name$="reject"],
+            > .btn[name$="_cancel"] {
+                margin-left: var(--lhc-space-3);
+                position: relative;
+                background: var(--lhc-surface);
+                border-color: var(--lhc-border);
+                color: var(--lhc-red-ink);
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    left: calc(var(--lhc-space-2) * -1);
+                    top: 5px;
+                    bottom: 5px;
+                    width: 1px;
+                    background: var(--lhc-border);
+                }
+
+                &:hover:not(:disabled) {
+                    background: var(--lhc-red-pale);
+                    border-color: var(--lhc-red-ink);
+                    color: var(--lhc-red-ink);
+                }
+            }
+        }
+
+        // A <widget> in a header is wrapped in .o_widget, which is a block —
+        // without this it drops its button onto a line of its own and the bar
+        // grows a second row for one control.
+        .o_statusbar_buttons > .o_widget,
+        > .o_widget {
+            display: inline-flex;
+            align-items: center;
+
+            > .btn { margin: 0; }
+        }
+
+        // --- The stage strip ----------------------------------------------
+        // Odoo's own, untouched. The chevron progression is drawn out of
+        // clip-path polygons and driven entirely by custom properties, so the
+        // way to change its colour is to set those, not to redraw it — an
+        // earlier attempt turned the strip into detached pills and lost the
+        // progression the shape is there to show.
+        //
+        // The current stage is the accent, with navy on it rather than white:
+        // gold carries white at 2.94:1 and navy at 5.85:1.
+        .o_field_statusbar > .o_statusbar_status,
+        .o_field_statusbar_duration > .o_statusbar_status {
+            --o-statusbar-background-active: var(--lhc-gold);
+            --o-statusbar-border-active: var(--lhc-gold-dark);
+            // Hover is deliberately a no-op — the resting fill again, so
+            // nothing moves under the pointer.
+            --o-statusbar-background-hover: var(--lhc-blue-pale);
+            // The notch between stages. Odoo draws it in the page colour,
+            // which is a hard white line through a pale strip; a soft blue
+            // keeps the chevron shape legible without cutting the row.
+            --o-statusbar-border: #cfd9e6;
+
+            // The stages you are not on: pale blue with a navy word (12.6:1)
+            // rather than the secondary fill they would inherit, which made
+            // every future stage as loud as the one you are on.
+            > .o_arrow_button {
+                background-color: var(--lhc-blue-pale);
+                color: var(--lhc-navy);
+                font-size: 12px;
+                font-weight: 500;
+            }
+        }
+
+        // The word on the active stage. Odoo colours the chevron, not its
+        // label, so this is the one declaration the fill does not bring.
+        .o_arrow_button.o_arrow_button_current,
+        .o_arrow_button.o_arrow_button_current:disabled,
+        .o_arrow_button.o_arrow_button_current:hover,
+        .o_arrow_button.o_arrow_button_current:focus {
+            color: var(--lhc-navy);
+            font-weight: 700;
+        }
+    }
+
+    // --- Notebook tabs ----------------------------------------------------
+    .o_notebook > .o_notebook_headers {
+        border-bottom: 1px solid var(--lhc-border);
+        // A form with eight pages must not push its content down a row, so the
+        // tab strip scrolls sideways rather than wrapping.
+        overflow-x: auto;
+        margin-bottom: 18px;
+
+        .nav-tabs {
+            border-bottom: 0;
+            gap: 2px;
+            flex-wrap: nowrap;
+
+            .nav-link {
+                border: 0;
+                border-bottom: 2px solid transparent;
+                border-radius: 0;
+                padding: 9px 15px;
+                font-size: 13px;
+                font-weight: 600;
+                white-space: nowrap;
+                color: var(--lhc-muted);
+                background: transparent;
+                transition: color var(--lhc-fast) var(--lhc-ease),
+                            border-color var(--lhc-fast) var(--lhc-ease);
+
+                &:hover { color: var(--lhc-ink); }
+
+                &.active {
+                    color: var(--lhc-navy);
+                    border-bottom-color: var(--lhc-gold);
+                    background: transparent;
+                }
+            }
+        }
+    }
+
+    // --- Button box (smart buttons) --------------------------------------
+    .oe_button_box .oe_stat_button {
+        border-radius: var(--lhc-radius);
+        border-color: var(--lhc-border);
+        color: var(--lhc-navy);
+        transition: background-color var(--lhc-fast) var(--lhc-ease),
+                    border-color var(--lhc-fast) var(--lhc-ease);
+
+        &:hover {
+            background: var(--lhc-bg);
+            border-color: var(--lhc-navy-light);
+        }
+
+        .o_stat_value {
+            color: var(--lhc-ink);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .o_stat_text { color: var(--lhc-muted); }
+    }
+
+    // --- One2many lists inside a form ------------------------------------
+    // A banded header inside a card is a card inside a card; the embedded list
+    // keeps a hairline instead.
+    .o_field_x2many_list .o_list_table > thead > tr > th {
+        background: transparent;
+        border-bottom: 1px solid var(--lhc-border);
+        color: var(--lhc-muted-2);
+    }
+
+    .o_field_x2many_list .o_list_view {
+        border: 1px solid var(--lhc-border);
+        border-radius: var(--lhc-radius);
+        box-shadow: none;
+    }
+
+    // --- Chatter ----------------------------------------------------------
+    .o-mail-Chatter,
+    .o-mail-Form-chatter {
+        background: var(--lhc-surface);
+        border-left: 1px solid var(--lhc-border);
+    }
+}
+
+// --- Alerts ---------------------------------------------------------------
+// Four variants on the brand's status tints, so an alert on a form and a badge
+// in a list mean the same colour.
+.alert {
+    border-radius: var(--lhc-radius);
+    font-size: 13px;
+    border-width: 1px;
+}
+
+.alert-warning { background: var(--lhc-amber-pale); color: var(--lhc-amber-ink); border-color: var(--lhc-amber-line); }
+.alert-danger  { background: var(--lhc-red-pale);   color: var(--lhc-red-ink);   border-color: var(--lhc-red-line); }
+.alert-info    { background: var(--lhc-blue-pale);  color: var(--lhc-blue-ink);  border-color: var(--lhc-blue-line); }
+.alert-success { background: var(--lhc-green-pale); color: var(--lhc-green-ink); border-color: var(--lhc-green-line); }
+
+// --- Responsive -----------------------------------------------------------
+@media (max-width: 820px) {
+    .o_form_view {
+        .o_form_sheet_bg {
+            padding: var(--lhc-space-3) 0;
+
+            > .o_form_sheet {
+                border-radius: 0;
+                border-left: 0;
+                border-right: 0;
+                padding: var(--lhc-space-4) var(--lhc-space-3);
+            }
+        }
+
+        .o_form_statusbar {
+            padding: var(--lhc-space-2) var(--lhc-space-3);
+
+            // The stage strip drops under the buttons rather than squeezing
+            // them, and starts at the left edge where it is readable.
+            .o_statusbar_status {
+                margin-left: 0;
+                width: 100%;
+                order: 2;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                scrollbar-width: thin;
+            }
+
+            .o_statusbar_buttons { order: 1; }
+        }
+
+        .oe_button_box { flex-wrap: wrap; }
+    }
+}
+
+
+// ===========================================================================
+// PREMIUM PASS.
+//
+// The complaint was that a record screen read as a stack of grey boxes with
+// no hierarchy — everything the same weight, nothing telling you where you
+// are. None of this changes a field, a widget or a layout: it is typography,
+// spacing and one accent.
+// ===========================================================================
+body.o_web_client .o_form_view {
+
+    // ---- The sheet ---------------------------------------------------------
+    // A little more lift and a little more room. A record is the most-looked-at
+    // surface in the product and it can afford to feel like a document.
+    .o_form_sheet_bg > .o_form_sheet {
+        box-shadow: var(--lhc-shadow-md);
+        padding: clamp(22px, 2vw, 38px);
+    }
+
+    // ---- The record's name -------------------------------------------------
+    // The title field was just another box, the largest one on the screen. It
+    // is the name of the thing you are looking at, so it reads as a heading and
+    // loses the frame entirely until you go to change it.
+    .oe_title .o_field_widget .o_input,
+    .oe_title input.o_input {
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+        padding-left: 0;
+        font-size: clamp(20px, 1.5vw, 27px);
+        font-weight: 700;
+        letter-spacing: -.02em;
+        color: var(--lhc-navy);
+
+        &:hover:not(:disabled):not([readonly]) {
+            border-color: var(--lhc-border);
+            background: var(--lhc-gray-50);
+            padding-left: 12px;
+        }
+
+        &:focus {
+            border-color: var(--lhc-navy);
+            background: var(--lhc-surface);
+            padding-left: 12px;
+        }
+    }
+
+    // ---- Labels ------------------------------------------------------------
+    // Quieter and a touch smaller than the value they label. Sentence case,
+    // medium weight: a column of bold black labels competes with the data.
+    .o_form_label {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--lhc-muted);
+        letter-spacing: 0;
+    }
+
+    // ---- Section headings --------------------------------------------------
+    // ADDRESSES / COMPANY / GST / AUTHORIZED REPRESENTATIVE. These were plain
+    // grey words on a hairline. Given the accent as a short leading rule they
+    // become the landmarks you scan a long form by.
+    .o_horizontal_separator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: var(--lhc-space-8) 0 var(--lhc-space-4);
+        padding: 0;
+        border: 0;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--lhc-navy);
+
+        &::before {
+            content: "";
+            flex: 0 0 22px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--lhc-grad-gold);
+        }
+
+        &::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--lhc-border);
+        }
+    }
+
+    // ---- Read-only values --------------------------------------------------
+    // A value you cannot edit should not be drawn as an empty writable box.
+    // It reads as text, with the weight doing the work.
+    .o_field_widget.o_readonly_modifier .o_input,
+    .o_field_widget .o_readonly_modifier {
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+        padding-left: 0;
+        font-weight: 500;
+        color: var(--lhc-ink);
+    }
+}
+
+
+// ===========================================================================
+// PREMIUM PASS 2 — the parts of a record screen below the fields.
+//
+// The sheet, the labels and the section headings were done in the pass above.
+// What still read as stock Odoo is everything under them: the notebook tabs,
+// the embedded table, the row that adds to it, and the chatter. Those are half
+// the height of a real record and most of the interaction.
+// ===========================================================================
+body.o_web_client .o_form_view {
+
+    // ---- Notebook tabs -----------------------------------------------------
+    // A tab strip is navigation, so it gets the same "you are here" language as
+    // the rail: gold marks the current one, and nothing else is gold.
+    .o_notebook > .o_notebook_headers .nav-tabs {
+        border-bottom: 1px solid var(--lhc-border);
+        gap: 2px;
+
+        .nav-link {
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: var(--lhc-radius-sm) var(--lhc-radius-sm) 0 0;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--lhc-muted);
+            transition: color var(--lhc-fast) var(--lhc-ease),
+                        background-color var(--lhc-fast) var(--lhc-ease);
+
+            &:hover {
+                color: var(--lhc-navy);
+                background: var(--lhc-gray-50);
+            }
+
+            &.active {
+                color: var(--lhc-navy);
+                background: transparent;
+                border-bottom-color: var(--lhc-gold);
+            }
+        }
+    }
+
+    // ---- The embedded table ------------------------------------------------
+    // An x2many list is a table sitting inside a card, and stock it is drawn
+    // edge to edge with no frame of its own — so it reads as a hole in the
+    // sheet rather than as a component on it.
+    .o_field_x2many .o_list_renderer {
+        border: 1px solid var(--lhc-border);
+        border-radius: var(--lhc-radius);
+        background: var(--lhc-surface);
+        overflow: hidden;
+
+        > table > thead > tr > th {
+            background: var(--lhc-section-h);
+            border-bottom: 0;
+            padding: 10px 14px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            // Same band, same ink — see the token note.
+            color: var(--lhc-section-ink);
+        }
+
+        > table > tbody > tr.o_data_row > td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--lhc-border-2);
+            font-size: 13px;
+        }
+
+        > table > tbody > tr.o_data_row:last-of-type > td { border-bottom: 0; }
+    }
+
+    // The row that adds a line. Stock it is a bare blue link in a table cell;
+    // here it is a real affordance with a plus and the brand's readable gold.
+    .o_field_x2many .o_field_x2many_list_row_add a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        // The readable gold — 4.98:1 on white. The fill gold would be 2.94:1
+        // and this is a word, not a background.
+        color: var(--lhc-gold-fg);
+        font-weight: 600;
+        font-size: 12.5px;
+        text-decoration: none;
+
+        &::before {
+            content: "+";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: var(--lhc-gold-bg);
+            border: 1px solid var(--lhc-gold);
+            color: var(--lhc-gold-fg);
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        &:hover {
+            color: var(--lhc-navy);
+            text-decoration: none;
+
+            &::before { background: var(--lhc-gold); color: var(--lhc-navy); }
+        }
+    }
+
+    // ---- Chatter -----------------------------------------------------------
+    // It sits below the sheet on the page wash, so it needs to become a surface
+    // of its own or the messages float on the background.
+    .o-mail-Form-chatter {
+        background: var(--lhc-surface);
+        border: 1px solid var(--lhc-border);
+        border-radius: var(--lhc-radius-lg);
+        box-shadow: var(--lhc-shadow);
+        margin-top: var(--lhc-gap);
+    }
+
+    // The author's name leads each message; the timestamp is the quiet half.
+    .o-mail-Message-author { font-weight: 650; color: var(--lhc-navy); }
+    .o-mail-Message-date   { color: var(--lhc-muted); }
+
+    // The date divider between days.
+    .o-mail-DateSection {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--lhc-muted);
+    }
+}

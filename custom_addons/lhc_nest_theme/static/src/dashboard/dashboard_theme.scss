@@ -1,0 +1,437 @@
+// LHC NEST — dashboard restyle
+//
+// Styling only. `dashboard.js`, `dashboard.xml` and `lhc.dashboard` are not
+// touched: every figure still comes from `get_dashboard_data`, still runs as
+// the current user, and every card still opens the action it carries. This
+// sheet loads after the module's own dashboard.scss and overrides it.
+
+body.lhc-shell {
+
+    .o_lhc_dashboard {
+        background: var(--lhc-bg);
+
+        // NO padding at the top, and the shorthand is why this has to be
+        // spelled out here rather than left to appbar.scss.
+        //
+        // appbar.scss promotes `.o_lhc_head` into the same app bar every other
+        // screen gets from `.o_control_panel`, and sets `padding-top: 0` so
+        // that bar sits flush against the top of the action area. This sheet
+        // loads later at equal specificity, so the `padding` SHORTHAND that
+        // used to be here quietly put the top padding back — leaving a strip
+        // of the page wash above the white bar, with the absolutely-positioned
+        // systray floating on that strip instead of sitting in the bar. Two
+        // different grounds where every other screen has one continuous bar.
+        //
+        // Longhands, so the top stays zero however the sides are retuned.
+        padding-top: 0;
+        padding-right: var(--lhc-pad);
+        padding-bottom: var(--lhc-pad);
+        padding-left: var(--lhc-pad);
+
+        overflow: auto;
+    }
+
+    // ---- Header ----------------------------------------------------------
+    .o_lhc_head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: var(--lhc-gap);
+
+        h1 {
+            font-size: var(--lhc-fs-hero);
+            font-weight: 700;
+            color: var(--lhc-navy);
+            letter-spacing: -.02em;
+            margin: 0;
+        }
+    }
+
+    .o_lhc_sub {
+        font-size: var(--lhc-fs-micro);
+        color: var(--lhc-gray-500);
+        margin-top: 2px;
+    }
+
+    .o_lhc_head .btn { margin-left: auto; }
+
+    .o_lhc_loading {
+        padding: 40px;
+        text-align: center;
+        color: var(--lhc-gray-400);
+        font-size: 13px;
+    }
+
+    // ---- Sections --------------------------------------------------------
+    .o_lhc_section { margin-bottom: var(--lhc-gap); }
+
+    .o_lhc_section_title {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+        color: var(--lhc-gray-500);
+        margin-bottom: 9px;
+    }
+
+    // ---- Stat cards ------------------------------------------------------
+    // Indian digit grouping makes monetary values long (₹1,84,500), so the
+    // track floor is set from the widest realistic value rather than from the
+    // shortest — a count like "17" is happy in a wide card, but a lakh figure
+    // in a narrow one overflows.
+    .o_lhc_cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+        gap: var(--lhc-gap);
+    }
+
+    .o_lhc_card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        // Explicit, not inherited: lhc_nest_reports' own dashboard.scss still
+        // sets align-items:center for the old icon-on-the-left card. In a
+        // column flex box that centres every child horizontally, which is what
+        // was collapsing the label and figure into the middle of the card.
+        align-items: stretch;
+        text-align: left;
+        gap: 6px;
+        background: var(--lhc-grad-card);
+        border: 1px solid var(--lhc-navy-border);
+        border-radius: var(--lhc-radius-lg);
+        box-shadow: var(--lhc-shadow);
+        padding: 16px 18px;
+        min-width: 0;
+        transition: transform .15s, box-shadow .15s, border-color .15s;
+
+        &.o_lhc_clickable {
+            cursor: pointer;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--lhc-shadow-md);
+                border-color: rgba(183, 144, 91, .45);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--lhc-gold);
+                outline-offset: 2px;
+            }
+        }
+    }
+
+    // Label and icon share the top line; the icon is small and quiet so the
+    // reading order stays label -> figure -> context, as in the reference.
+    .o_lhc_card_head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .o_lhc_card_label {
+        font-size: var(--lhc-fs-label);
+        font-weight: 600;
+        color: var(--lhc-gray-500);
+        line-height: 1.35;
+        min-width: 0;
+    }
+
+    .o_lhc_card_icon {
+        font-size: 15px;
+        line-height: 1;
+        opacity: .5;
+        flex-shrink: 0;
+    }
+
+    .o_lhc_card_value {
+        font-size: var(--lhc-fs-stat);
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--lhc-navy);
+        letter-spacing: -.025em;
+        font-variant-numeric: tabular-nums;
+        overflow-wrap: anywhere;
+    }
+
+    .o_lhc_card_sub {
+        font-size: var(--lhc-fs-micro);
+        color: var(--lhc-gray-400);
+        line-height: 1.35;
+        min-height: 1em;          // keeps cards aligned when a sub is absent
+    }
+
+    // Tone colours the figure, not the card — the reference keeps the surface
+    // white and lets the number carry the meaning.
+    .o_lhc_card.o_lhc_green  .o_lhc_card_value { color: var(--lhc-green); }
+    .o_lhc_card.o_lhc_red    .o_lhc_card_value { color: var(--lhc-red); }
+    .o_lhc_card.o_lhc_amber  .o_lhc_card_value { color: var(--lhc-amber); }
+    .o_lhc_card.o_lhc_blue   .o_lhc_card_value { color: var(--lhc-blue); }
+    .o_lhc_card.o_lhc_teal   .o_lhc_card_value { color: var(--lhc-teal); }
+    .o_lhc_card.o_lhc_purple .o_lhc_card_value { color: var(--lhc-purple); }
+    .o_lhc_card.o_lhc_warning .o_lhc_card_value { color: var(--lhc-amber); }
+    .o_lhc_card.o_lhc_danger  .o_lhc_card_value { color: var(--lhc-red); }
+
+
+    // ---- Two-panel row ---------------------------------------------------
+    // auto-fit keeps this honest: two panels side by side when there is room,
+    // one per row when there is not. No breakpoint to keep in sync.
+    .o_lhc_panels {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: var(--lhc-gap);
+        align-items: start;
+        margin-bottom: var(--lhc-gap);
+    }
+
+    // ---- Alert rows ------------------------------------------------------
+    .o_lhc_alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        border-radius: var(--lhc-radius);
+        border: 1px solid transparent;
+        margin-bottom: 9px;
+        font-size: var(--lhc-fs-body);
+
+        &:last-child { margin-bottom: 0; }
+
+        &.o_lhc_clickable {
+            cursor: pointer;
+            transition: transform .12s;
+            &:hover { transform: translateX(2px); }
+            &:focus-visible { outline: 2px solid var(--lhc-gold); outline-offset: 2px; }
+        }
+    }
+
+    .o_lhc_alert_icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+    .o_lhc_alert_text { min-width: 0; }
+    .o_lhc_alert_text strong { font-weight: 700; }
+
+    .o_lhc_alert_danger  { background: var(--lhc-red-pale);   color: var(--lhc-red-ink);   border-color: #e9c4c4; }
+    .o_lhc_alert_warning { background: var(--lhc-amber-pale); color: var(--lhc-amber-ink); border-color: #f0d9bd; }
+    .o_lhc_alert_info,
+    .o_lhc_alert_blue    { background: var(--lhc-blue-pale);  color: var(--lhc-blue-ink);  border-color: #c3d1e4; }
+    .o_lhc_alert_green   { background: var(--lhc-green-pale); color: var(--lhc-green-ink); border-color: #c2ddd0; }
+
+    // ---- Entity pill -----------------------------------------------------
+    .o_lhc_pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        background: var(--lhc-navy-muted);
+        color: var(--lhc-navy);
+        font-size: 11.5px;
+        font-weight: 600;
+    }
+
+    .o_lhc_received { color: var(--lhc-green); font-weight: 600; }
+
+    .o_lhc_table_wrap { overflow-x: auto; }
+
+    // ---- Loading / empty / error -----------------------------------------
+    .o_lhc_state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+        padding: 34px 24px;
+        border: 2px dashed var(--lhc-gray-200);
+        border-radius: var(--lhc-radius-lg);
+        background: var(--lhc-gray-50);
+    }
+
+    .o_lhc_state_icon  { font-size: 26px; opacity: .75; }
+    .o_lhc_state_title { font-weight: 650; color: var(--lhc-navy); font-size: 14.5px; }
+    .o_lhc_state_text  { font-size: 12.5px; color: var(--lhc-gray-500); max-width: 46ch; }
+    .o_lhc_state .btn  { margin-top: 8px; }
+
+    .o_lhc_state_error {
+        border-color: #e9c4c4;
+        background: var(--lhc-red-pale);
+        .o_lhc_state_title { color: var(--lhc-red-ink); }
+    }
+
+    // ---- Panels ----------------------------------------------------------
+    .o_lhc_panel {
+        background: var(--lhc-white);
+        border: 1px solid var(--lhc-navy-border);
+        border-radius: var(--lhc-radius-lg);
+        box-shadow: var(--lhc-shadow);
+        padding: 16px;
+        margin-bottom: var(--lhc-gap);
+        overflow-x: auto;
+    }
+
+    .o_lhc_table {
+        margin-bottom: 0;
+        width: 100%;
+        font-size: var(--lhc-fs-body);
+
+        thead th {
+            background: var(--lhc-gray-50);
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--lhc-gray-500);
+            border-bottom: 1px solid var(--lhc-gray-200);
+        }
+
+        tbody td {
+            color: var(--lhc-gray-700);
+            border-bottom: 1px solid var(--lhc-gray-100);
+            font-variant-numeric: tabular-nums;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td { border-bottom: 0; }
+
+        tbody tr.o_lhc_clickable {
+            cursor: pointer;
+            &:hover td { background: var(--lhc-gray-50); }
+        }
+    }
+
+    .o_lhc_pending { color: var(--lhc-red); font-weight: 600; }
+
+    // ---- Responsive ------------------------------------------------------
+    @media (max-width: 820px) {
+        // Same reasoning as above: the bar stays flush at the top.
+        .o_lhc_dashboard {
+            padding: 0 14px 14px;
+        }
+        .o_lhc_cards { grid-template-columns: repeat(2, 1fr); }
+        .o_lhc_card_value { font-size: 22px; }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.lhc-shell .o_lhc_card { transition: none !important; }
+    body.lhc-shell .o_lhc_card.o_lhc_clickable:hover { transform: none !important; }
+}
+
+
+// ===========================================================================
+// Stat cards, tinted by their own meaning.
+//
+// The cards used to be white on white — a grid of identical boxes where the
+// only difference between "Received" and "Overdue Tenants" was the word on it,
+// so the one card that needed to be noticed never was.
+//
+// Each card now carries its tone as a surface: its pale tint as the ground,
+// its own hue as the outline (a tinted card outlined in generic grey reads as
+// a grey card someone filled in), and the solid fill on the icon tile. The
+// FIGURE stays navy on every card — it is the thing being read, and eight
+// differently-coloured numbers on one screen is a chart, not a dashboard.
+//
+// The tones come from the model (`tone` on each card in dashboard.py) and mean
+// something: success, warning, danger. Nothing here is a decorative rotation
+// through a palette — a card is amber because the number on it needs a person,
+// not because it is third in the row.
+// ===========================================================================
+body.lhc-shell {
+
+    .o_lhc_card {
+        // Untoned cards are plain counts — portfolio size, agreement volume.
+        // Steel-blue, which reads as "information" rather than as a state.
+        --card-tint: var(--lhc-blue-pale);
+        --card-line: var(--lhc-blue-line);
+        --card-fill: var(--lhc-blue);
+        --card-ink:  var(--lhc-blue-ink);
+
+        background: var(--card-tint);
+        border: 1px solid var(--card-line);
+
+        &.o_lhc_clickable:hover {
+            border-color: var(--card-fill);
+            box-shadow: var(--lhc-shadow-md);
+        }
+    }
+
+    .o_lhc_card.o_lhc_success,
+    .o_lhc_card.o_lhc_green {
+        --card-tint: var(--lhc-green-pale);
+        --card-line: var(--lhc-green-line);
+        --card-fill: var(--lhc-green);
+        --card-ink:  var(--lhc-green-ink);
+    }
+
+    .o_lhc_card.o_lhc_warning,
+    .o_lhc_card.o_lhc_amber {
+        --card-tint: var(--lhc-amber-pale);
+        --card-line: var(--lhc-amber-line);
+        --card-fill: var(--lhc-amber);
+        --card-ink:  var(--lhc-amber-ink);
+    }
+
+    .o_lhc_card.o_lhc_danger,
+    .o_lhc_card.o_lhc_red {
+        --card-tint: var(--lhc-red-pale);
+        --card-line: var(--lhc-red-line);
+        --card-fill: var(--lhc-red);
+        --card-ink:  var(--lhc-red-ink);
+    }
+
+    .o_lhc_card.o_lhc_teal {
+        --card-tint: var(--lhc-teal-pale);
+        --card-line: var(--lhc-teal-line);
+        --card-fill: var(--lhc-teal);
+        --card-ink:  var(--lhc-teal-ink);
+    }
+
+    .o_lhc_card.o_lhc_purple {
+        --card-tint: var(--lhc-purple-pale);
+        --card-line: var(--lhc-purple-line);
+        --card-fill: var(--lhc-purple);
+        --card-ink:  var(--lhc-purple-ink);
+    }
+
+    // The label is the tone's ink — readable on its own tint by construction,
+    // which is the whole reason the palette carries a third value per status.
+    .o_lhc_card_label { color: var(--card-ink); }
+    .o_lhc_card_sub   { color: var(--card-ink); opacity: .82; }
+
+    // The figure stays navy on every card. See the note above.
+    .o_lhc_card_value,
+    .o_lhc_card.o_lhc_green  .o_lhc_card_value,
+    .o_lhc_card.o_lhc_red    .o_lhc_card_value,
+    .o_lhc_card.o_lhc_amber  .o_lhc_card_value,
+    .o_lhc_card.o_lhc_blue   .o_lhc_card_value,
+    .o_lhc_card.o_lhc_teal   .o_lhc_card_value,
+    .o_lhc_card.o_lhc_purple .o_lhc_card_value,
+    .o_lhc_card.o_lhc_warning .o_lhc_card_value,
+    .o_lhc_card.o_lhc_danger  .o_lhc_card_value {
+        color: var(--lhc-navy);
+    }
+
+    // The glyph gets a solid tile — the one place the fill colour appears at
+    // full strength, and small enough that six of them on a screen still read
+    // as a set rather than as six alarms.
+    .o_lhc_card_icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        border-radius: var(--lhc-radius);
+        background: var(--card-fill);
+        color: #fff;
+        font-size: 14px;
+        line-height: 1;
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    body.lhc-shell .o_lhc_card_icon {
+        width: 28px;
+        height: 28px;
+        flex-basis: 28px;
+        font-size: 12.5px;
+    }
+}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lhc_maintenance_list" model="ir.ui.view">
+        <field name="name">lhc.maintenance.list</field>
+        <field name="model">lhc.maintenance</field>
+        <field name="arch" type="xml">
+            <list decoration-info="is_split==True">
+                <field name="date"/>
+                <field name="scope"/>
+                <field name="property_id"/>
+                <field name="unit_id"/>
+                <field name="expense_type"/>
+                <field name="vendor"/>
+                <field name="amount" sum="Amount"/>
+                <field name="recurring"/>
+                <field name="payable_by"/>
+                <field name="recovery_status" widget="badge"
+                       decoration-warning="recovery_status=='pending'"
+                       decoration-success="recovery_status=='recovered'"/>
+                <field name="posted_entity_id"/>
+                <field name="is_split"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lhc_maintenance_form" model="ir.ui.view">
+        <field name="name">lhc.maintenance.form</field>
+        <field name="model">lhc.maintenance</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="scope"/>
+                            <field name="property_id"/>
+                            <field name="unit_id" invisible="scope=='building'"
+                                   required="scope=='unit'"/>
+                            <field name="expense_type"/>
+                            <field name="vendor"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="recurring" invisible="scope!='building'"/>
+                            <field name="split_equally" invisible="scope!='building'"/>
+                            <field name="payable_by" invisible="scope!='unit'"/>
+                            <field name="recovery_status" invisible="scope!='unit'"/>
+                            <field name="posted_entity_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="note"/>
+                    <group string="Split Charges (one Pending Recovery per unit)"
+                           invisible="not child_ids">
+                        <field name="child_ids" nolabel="1" readonly="1">
+                            <list>
+                                <field name="unit_id"/>
+                                <field name="amount"/>
+                                <field name="recovery_status"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lhc_maintenance" model="ir.actions.act_window">
+        <field name="name">Maintenance / Expenses</field>
+        <field name="res_model">lhc.maintenance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

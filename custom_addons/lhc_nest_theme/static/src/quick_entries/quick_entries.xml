@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t t-name="lhc_nest_theme.QuickEntries">
+        <div class="o_action lhc-qe">
+            <div class="lhc-qe-head">
+                <h1>Quick Entries</h1>
+                <div class="lhc-qe-sub">
+                    Every day-to-day entry, in one place — no hunting through menus
+                </div>
+            </div>
+
+            <t t-if="!state.sections.length">
+                <div class="lhc-qe-empty">
+                    No quick entries are available for your role.
+                </div>
+            </t>
+
+            <t t-foreach="state.sections" t-as="section" t-key="section.key">
+                <div class="lhc-qe-section-label">
+                    <span t-esc="section.icon"/> <span t-esc="section.title"/>
+                </div>
+                <div class="lhc-qe-grid">
+                    <button type="button"
+                            class="lhc-qe-card"
+                            t-foreach="section.entries" t-as="entry" t-key="entry.id"
+                            t-on-click="() => this.openEntry(entry)">
+                        <span t-attf-class="lhc-qe-icon lhc-qe-{{entry.tone}}"
+                              aria-hidden="true" t-esc="entry.icon"/>
+                        <span class="lhc-qe-text">
+                            <span class="lhc-qe-title" t-esc="entry.name"/>
+                            <span class="lhc-qe-desc" t-if="entry.desc" t-esc="entry.desc"/>
+                        </span>
+                    </button>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

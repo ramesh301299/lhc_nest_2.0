@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      noupdate="0", deliberately.
+
+      A role definition is the security model, not an administrator preference:
+      a correction to an implied group or to a category has to reach databases
+      that already installed the old version. ir.model.access.csv already
+      behaves this way — Odoo always reloads it — and having the groups sit
+      behind noupdate="1" was the inconsistency that let a fixed role sit
+      unapplied on every existing database.
+
+      Which users hold a role is NOT re-imposed here beyond the initial
+      administrator grant below; that is ordinary operational data and is
+      managed in Settings → Users.
+    -->
+    <data noupdate="0">
+
+        <!-- ==========================================================
+             Role category.
+
+             The two LHC NEST roles ARE a hierarchy, unlike the LHC
+             construction ERP's five: an Admin can do everything an
+             Accountant can and more, so Admin implies Accountant and the
+             pair renders as a single radio selector on the user form.
+             ========================================================== -->
+        <record id="module_category_lhc_nest" model="ir.module.category">
+            <field name="name">LHC NEST</field>
+            <field name="description">Rental Property ERP roles</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Accountant: the operational role. Posts receipts for approval,
+             cannot renew, cannot see company totals or restricted reports. -->
+        <record id="group_lhc_accountant" model="res.groups">
+            <field name="name">Accountant</field>
+            <field name="category_id" ref="module_category_lhc_nest"/>
+            <!-- base.group_user is what makes the holder an *internal* user.
+                 Without it an Accountant-only account is a portal user: it
+                 cannot open the backend at all, so every menu and record rule
+                 below it is unreachable. -->
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Operational access — posts receipts for approval, cannot renew,
+                cannot see company totals, restricted reports or exports.</field>
+        </record>
+
+        <!-- Admin: everything. Implies Accountant so an admin sees every
+             operational menu without menu security being duplicated. -->
+        <record id="group_lhc_admin" model="res.groups">
+            <field name="name">Admin</field>
+            <field name="category_id" ref="module_category_lhc_nest"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('group_lhc_accountant'))]"/>
+            <field name="comment">Full access — posts receipts directly, approves, renews,
+                sees all reports and exports.</field>
+        </record>
+
+        <!-- The Odoo administrator becomes an LHC NEST Admin on install so the
+             system is usable immediately after the module is added. -->
+        <record id="base.user_admin" model="res.users">
+            <field name="groups_id" eval="[(4, ref('lhc_nest.group_lhc_admin'))]"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,350 @@
+.o_lhc_login {
+    // HALF AND HALF.
+    //
+    // Two panes on one row: the brand on the left, the form on the right. The
+    // brand half is the only place in the product with nothing to do — no data
+    // to get out of the way for — so it carries the identity at full strength
+    // and lets the form half stay completely plain.
+    //
+    // `min-height` twice: dvh follows a mobile browser's collapsing toolbars,
+    // vh is the fallback for engines that do not implement it and must come
+    // first so an engine that understands dvh overrides it.
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #fff;
+
+    // THE FLEX PARENT IS `main`, NOT `<body>`.
+    //
+    // `web.login_layout` renders through `web.frontend_layout`, which wraps
+    // everything in `#wrapwrap > main`. So the body's only child is that
+    // wrapper: putting `display: flex` on the body laid out ONE item and the
+    // two panes, being ordinary blocks inside `<main>`, stacked top-to-bottom.
+    // That is why the split came out horizontal-banded instead of side by side.
+    //
+    // The chain has to carry the height down as well, or the panes have nothing
+    // to stretch against and the navy half collapses to its content.
+    > #wrapwrap {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    > #wrapwrap > main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        align-items: stretch;
+    }
+
+    // ---- Left: the brand --------------------------------------------------
+    main > .o_lhc_login_brand {
+        flex: 1 1 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 40px;
+        position: relative;
+        overflow: hidden;
+
+        // Navy lit from the upper left with a single gold bloom low and right:
+        // enough that a large flat field does not read as a solid block, far
+        // too dim to compete with the mark sitting on it.
+        background:
+            radial-gradient(900px 560px at 78% 112%, rgba(183, 144, 91, .26), transparent 62%),
+            radial-gradient(760px 460px at 6% -14%,  rgba(183, 144, 91, .12), transparent 58%),
+            linear-gradient(158deg, #1e2b45 0%, #{$lhc-navy} 55%, #{$lhc-navy-dark} 100%);
+
+        // The seam. A gold hairline rather than a hard edge, so the two halves
+        // read as one screen divided instead of two pages pushed together.
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 0 auto;
+            width: 1px;
+            background: linear-gradient(180deg,
+                        rgba(183, 144, 91, 0), #{$lhc-gold} 45%, rgba(183, 144, 91, 0));
+        }
+    }
+
+    .o_lhc_login_brand_in {
+        text-align: center;
+        max-width: 380px;
+    }
+
+    // The monogram is drawn in navy and gold for a light ground, so on this
+    // navy panel its "LHC" would vanish. The ivory tile is the ground it was
+    // designed against, not decoration.
+    .o_lhc_login_tile {
+        width: clamp(96px, 9vw, 132px);
+        height: clamp(96px, 9vw, 132px);
+        margin: 0 auto 28px;
+        padding: 12px;
+        border-radius: 20px;
+        background: #{$lhc-bg};
+        box-shadow: 0 18px 44px -14px rgba(6, 10, 20, .6),
+                    inset 0 1px 0 rgba(255, 255, 255, .8);
+
+        img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    }
+
+    // The wordmark's two-tone, re-cut for a dark ground: the printed mark sets
+    // "LHC" in navy, which here becomes white, and keeps "NEST" gold. The LIT
+    // gold — #cfad7e is 8.12:1 on this navy where the base #B7905B is 5.85:1.
+    .o_lhc_login_word {
+        font-size: clamp(26px, 2.6vw, 40px);
+        font-weight: 600;
+        letter-spacing: .18em;
+        line-height: 1;
+        margin-left: .18em;   // optical: balances the trailing letter-space
+    }
+
+    .o_lhc_w_lhc  { color: #fff; }
+    .o_lhc_w_nest { color: #{$lhc-gold-light}; }
+
+    .o_lhc_login_rule {
+        width: 64px;
+        height: 2px;
+        margin: 24px auto 20px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #{$lhc-gold-dark}, #{$lhc-gold-light});
+    }
+
+    .o_lhc_login_strap {
+        font-size: clamp(10px, .8vw, 12.5px);
+        font-weight: 600;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, .82);
+    }
+
+    .o_lhc_login_group {
+        margin-top: 10px;
+        font-size: clamp(9px, .7vw, 11px);
+        font-weight: 600;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: #{$lhc-gold-light};
+        opacity: .8;
+    }
+
+    // ---- Right: the form --------------------------------------------------
+    // Odoo's `.container` is the wrapper the form arrives in. It becomes the
+    // second pane rather than a centred box on a page. Note the `main >`:
+    // it is a child of `<main>`, not of the body (see the note above).
+    main > .container {
+        flex: 1 1 50%;
+        max-width: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 40px;
+        margin: 0;
+        background: #fff;
+    }
+
+    // The card frame goes entirely: the pane IS the surface now, and a card
+    // drawn on it would be a box inside a box.
+    .card {
+        width: 100%;
+        max-width: 440px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    // ---- The greeting -----------------------------------------------------
+    // The banner sits above it, sized off the form rather than the pane so it
+    // stays in proportion to the fields it introduces.
+    // Sized up hard. The lockup is letterhead artwork: "LHCNEST" is about a
+    // fifth of its height, the strapline about a sixteenth. At 264px wide the
+    // strapline rendered around 4px tall and was unreadable, which is the
+    // complaint. Filling the pane's width takes it to roughly 9px — legible,
+    // and about the practical limit before the mark starts to dominate the
+    // form it introduces.
+    .o_lhc_login_banner {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto 30px;
+    }
+
+    .o_lhc_login_welcome {
+        margin-bottom: 30px;
+        text-align: center;
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: clamp(24px, 2vw, 31px);
+            font-weight: 700;
+            letter-spacing: -.02em;
+            color: #{$lhc-navy};
+        }
+
+        p {
+            margin: 0;
+            font-size: 13.5px;
+            color: #{$lhc-muted};
+        }
+    }
+
+    .card-body { padding: 0; }
+
+    // ---- Fields -----------------------------------------------------------
+    .form-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+        color: #{$lhc-muted};
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        height: 46px;
+        padding: 10px 14px;
+        border: 1px solid #{$lhc-border};
+        border-radius: 10px;
+        background: #{$lhc-bg};
+        box-shadow: inset 0 1px 2px rgba(17, 27, 48, .05);
+        font-size: 14px;
+        color: #{$lhc-text};
+        transition: border-color 140ms ease, background-color 140ms ease,
+                    box-shadow 140ms ease;
+
+        &::placeholder { color: #{$lhc-icon-quiet}; }
+
+        &:focus {
+            border-color: #{$lhc-gold};
+            background: #fff;
+            // Gold, because on this screen the gold IS the primary colour and
+            // there is no data for it to compete with.
+            box-shadow: 0 0 0 4px rgba(183, 144, 91, .22);
+            outline: 0;
+        }
+    }
+
+    // ---- The button -------------------------------------------------------
+    // Gold is the primary brand colour, so the primary action is gold — and it
+    // carries NAVY, never white: white on #B7905B is 2.94:1, navy is 5.85:1.
+    .oe_login_buttons .btn-primary {
+        height: 48px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(135deg,
+                    #{$lhc-gold-dark} 0%, #{$lhc-gold} 52%, #{$lhc-gold-light} 100%);
+        color: #{$lhc-navy};
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: .02em;
+        box-shadow: 0 6px 18px rgba(183, 144, 91, .38),
+                    inset 0 1px 0 rgba(255, 255, 255, .42);
+        transition: transform 140ms ease, box-shadow 140ms ease;
+
+        &:hover {
+            color: #{$lhc-navy};
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px rgba(183, 144, 91, .46),
+                        inset 0 1px 0 rgba(255, 255, 255, .5);
+        }
+
+        &:active { transform: translateY(0); }
+
+        &:focus-visible {
+            outline: 3px solid #{$lhc-navy};
+            outline-offset: 2px;
+        }
+    }
+
+    // Secondary routes — reset password, sign up, "log in as superuser".
+    a {
+        color: #{$lhc-gold-fg};
+        text-decoration: none;
+        font-weight: 500;
+
+        &:hover { color: #{$lhc-navy}; text-decoration: underline; }
+    }
+
+    .btn-link { color: #{$lhc-gold-fg}; }
+
+    // ---- Messages ---------------------------------------------------------
+    .alert-danger {
+        border: 1px solid #{$lhc-red-line};
+        background: #{$lhc-red-pale};
+        color: #{$lhc-red-ink};
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .alert-success {
+        border: 1px solid #{$lhc-green-line};
+        background: #{$lhc-green-pale};
+        color: #{$lhc-green-ink};
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    // ---- Footer -----------------------------------------------------------
+    // "Manage Databases · Powered by Odoo". Kept — removing the attribution is
+    // a licence question, not a design one — but quietened onto the navy below
+    // the card rather than boxed inside it.
+    .card-body > .text-center.small.mt-4 {
+        border-top: 1px solid #{$lhc-border-2} !important;
+        padding-top: 16px !important;
+        font-size: 11.5px;
+
+        a { color: #{$lhc-muted}; font-weight: 400; }
+        a:hover { color: #{$lhc-navy}; }
+    }
+
+}
+
+// The database selector and password-reset screens reuse `web.login_layout`,
+// so they inherit all of the above and need nothing of their own.
+
+// ---- Narrow screens ------------------------------------------------------
+// Below 900px there is not enough width for two useful columns, so the brand
+// half becomes a band across the top and the form takes the rest. It is not
+// hidden: it is the only thing telling you which product you are signing in to.
+@media (max-width: 900px) {
+    .o_lhc_login {
+        > #wrapwrap > main { flex-direction: column; }
+
+        main > .o_lhc_login_brand {
+            flex: 0 0 auto;
+            padding: 34px 24px 30px;
+
+            // The seam runs along the bottom edge instead of the side.
+            &::after {
+                inset: auto 0 0 0;
+                width: auto;
+                height: 1px;
+                background: linear-gradient(90deg,
+                            rgba(183, 144, 91, 0), #{$lhc-gold} 50%, rgba(183, 144, 91, 0));
+            }
+        }
+
+        .o_lhc_login_tile { width: 74px; height: 74px; margin-bottom: 18px; }
+        .o_lhc_login_rule { margin: 16px auto 14px; }
+        .o_lhc_login_group { display: none; }
+
+        main > .container { padding: 34px 24px 44px; }
+
+        // The brand band above already shows the lockup at this width, so the
+        // banner would be the same mark twice within one screen height.
+        .o_lhc_login_banner { display: none; }
+    }
+}
+
+// ---- Odoo's neutralized-database banner ----------------------------------
+// Removed on request. `#oe_neutralize_banner` is appended after #wrapwrap with
+// its colours set inline, so an id selector plus `!important` is what it takes
+// to hide it.
+//
+// Worth knowing what goes with it: Odoo shows this on any database that has
+// been neutralized, which means outgoing mail, crons and payment providers are
+// disabled. With the banner gone there is no longer anything on screen saying
+// "this is not production".
+#oe_neutralize_banner { display: none !important; }

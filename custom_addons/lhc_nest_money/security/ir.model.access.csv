@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_receipt_admin,receipt.admin,model_lhc_receipt,lhc_nest.group_lhc_admin,1,1,1,1
+access_receipt_acct,receipt.acct,model_lhc_receipt,lhc_nest.group_lhc_accountant,1,1,1,0
+access_ledger_admin,ledger.admin,model_lhc_ledger_entry,lhc_nest.group_lhc_admin,1,1,1,1
+access_ledger_acct,ledger.acct,model_lhc_ledger_entry,lhc_nest.group_lhc_accountant,1,1,1,0
+access_bill_admin,bill.admin,model_lhc_bill,lhc_nest.group_lhc_admin,1,1,1,1
+access_bill_acct,bill.acct,model_lhc_bill,lhc_nest.group_lhc_accountant,1,1,1,0
+access_maintenance_admin,maintenance.admin,model_lhc_maintenance,lhc_nest.group_lhc_admin,1,1,1,1
+access_maintenance_acct,maintenance.acct,model_lhc_maintenance,lhc_nest.group_lhc_accountant,1,1,1,0

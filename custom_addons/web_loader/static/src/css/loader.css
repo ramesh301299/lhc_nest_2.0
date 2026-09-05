@@ -1,0 +1,95 @@
+/*
+ * Animated dot loader, applied to both of Odoo's loading graphics:
+ * the bottom-right "Loading" pill and the full-screen blocking overlay.
+ *
+ * Why CSS and not a component override: BlockUI's template is an inline
+ * xml`...` tagged literal on the component class (web/static/src/core/ui/
+ * block_ui.js), so it cannot be extended with t-inherit -- patching it would
+ * mean copying the whole template string and re-syncing it on every Odoo
+ * upgrade. Three separate overlays (web, base_import, website preview) all
+ * render the same `.o_blockUI > .o_spinner > img` markup, so hiding that img
+ * and painting the wrapper catches every one of them with one rule and
+ * survives changes to the component internals.
+ *
+ * Scoped under .o_blockUI on purpose: the bare <img src="/web/static/img/
+ * spin.svg"> also appears inline in the html_editor / web_editor dialogs,
+ * where a 120px-wide loader would blow out the layout.
+ */
+/* Boxes below match the SVG's 130x96 viewBox ratio, and use background-size:
+   contain rather than explicit pixels so the artwork can never be squashed if
+   those proportions change again. */
+.o_blockUI .o_spinner {
+    width: 160px;
+    height: 118px;
+    background-image: url("/web_loader/static/src/img/enmac_loader.svg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+}
+
+/* Hide the stock rotating-circle SVG. This also drops its alt="Loading..."
+   from the accessibility tree, which is fine here: the overlay already renders
+   the visible, escalating "Loading... / Still loading..." text in .o_message
+   right below, so screen readers still announce the wait. */
+.o_blockUI .o_spinner img {
+    display: none;
+}
+
+/*
+ * The bottom-right "Loading" pill (.o_loading_indicator), shown 250ms after any
+ * non-silent RPC starts -- this is the loader users actually see during normal
+ * navigation, far more often than the blocking overlay above.
+ *
+ * Core renders it as a <span> whose only content is the text "Loading" (plus a
+ * "(n)" RPC counter in debug mode), styled in web/static/src/webclient/
+ * loading_indicator/loading_indicator.scss. font-size: 0 collapses that text so
+ * the Lottie player can take its place.
+ *
+ * This one gets the real Lottie (see lottie_loading_indicator.js), not the SVG
+ * background used by .o_blockUI above. Sizing follows the crop viewBox
+ * "240 250 260 105" declared in that file, i.e. a 260:105 aspect ratio.
+ *
+ * No !important needed: core's rules use single-class specificity too, and
+ * web_loader depends on 'web', so its CSS is appended after core's in the
+ * bundle and wins on source order.
+ */
+.o_loading_indicator {
+    /* Core pins this to the bottom-right corner (bottom: 0; right: 0). Reset
+       both edges before setting top/left, otherwise the element stays anchored
+       to the corner and the centring is ignored. position: fixed is inherited
+       from core, so this centres on the viewport rather than any scrolled
+       parent. The Transition component only animates opacity, so this
+       transform does not collide with its enter/leave classes. */
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+
+    /* Sized for the centre of the viewport rather than a corner chip, at the
+       239:273 ratio of the animation's crop box (see VIEW_BOX in
+       lottie_loading_indicator.js). The cluster is taller than it is wide
+       because the whole group rotates 180deg; a wide, short box clips it. */
+    width: 140px;
+    height: 160px;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    /* Collapses the "Loading" label and the debug-mode RPC counter. The text
+       stays in the DOM, so screen readers still announce it. */
+    font-size: 0;
+}
+
+/* Mount point injected by lottie_loading_indicator.xml. lottie-web builds its
+   own <svg> in here and sizes it to the container, so the container is what
+   controls the final scale. */
+.o_web_loader_lottie {
+    width: 100%;
+    height: 100%;
+}
+
+.o_web_loader_lottie svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}

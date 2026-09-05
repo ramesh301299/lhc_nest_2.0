@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Two properties, deliberately of different kinds.
+
+      Lakeview Residency is the multi-unit building everything downstream hangs
+      off: four units, one of each occupancy state the UI has to render.
+
+      Kumaran Villa is an independent house and carries NO unit of its own here
+      on purpose — lhc.property.create() auto-creates one (spec §4.3) so leases
+      and ledgers behave uniformly whether or not a building has units. Writing
+      that unit out by hand would hide the rule instead of exercising it, so
+      this file lets the ORM create it and nothing references it by xml id.
+    -->
+
+    <record id="demo_prop_lakeview" model="lhc.property">
+        <field name="name">Lakeview Residency</field>
+        <field name="property_type">multi</field>
+        <field name="location">Adyar, Chennai</field>
+        <field name="common_eb_no">EB-CMN-449021</field>
+    </record>
+
+    <record id="demo_prop_villa" model="lhc.property">
+        <field name="name">Kumaran Villa</field>
+        <field name="property_type">independent</field>
+        <field name="location">Thiruvanmiyur, Chennai</field>
+        <field name="common_eb_no">EB-CMN-771204</field>
+    </record>
+
+    <!-- ==============================================================
+         UNITS — one per occupancy state, so every kanban colour and
+         every status filter has a record behind it.
+         ============================================================== -->
+
+    <!-- Occupied: carries the residential lease, receipts and ledger. -->
+    <record id="demo_unit_a101" model="lhc.unit">
+        <field name="code">A-101</field>
+        <field name="property_id" ref="demo_prop_lakeview"/>
+        <field name="unit_type">2 BHK</field>
+        <field name="area_sqft">920</field>
+        <field name="super_builtup_area">1050</field>
+        <field name="own_eb_no">EB-UNIT-101883</field>
+        <field name="door_no">Flat A-101, Door No. 14/2</field>
+        <field name="boundaries">North: Second Main Road; South: Plot 15;
+East: Common stairwell; West: Open car park</field>
+        <field name="status">vacant</field>
+    </record>
+
+    <!-- Booked against the token advance below. -->
+    <record id="demo_unit_a102" model="lhc.unit">
+        <field name="code">A-102</field>
+        <field name="property_id" ref="demo_prop_lakeview"/>
+        <field name="unit_type">2 BHK</field>
+        <field name="area_sqft">910</field>
+        <field name="super_builtup_area">1040</field>
+        <field name="own_eb_no">EB-UNIT-101884</field>
+        <field name="door_no">Flat A-102, Door No. 14/2</field>
+        <field name="status">booked</field>
+    </record>
+
+    <!-- Goes to Notice Given in the leasing demo, which is what puts a vacate
+         checklist on screen. -->
+    <record id="demo_unit_b201" model="lhc.unit">
+        <field name="code">B-201</field>
+        <field name="property_id" ref="demo_prop_lakeview"/>
+        <field name="unit_type">3 BHK</field>
+        <field name="area_sqft">1240</field>
+        <field name="super_builtup_area">1400</field>
+        <field name="own_eb_no">EB-UNIT-102117</field>
+        <field name="door_no">Flat B-201, Door No. 14/2</field>
+        <field name="status">vacant</field>
+    </record>
+
+    <!-- Commercial: the GST side of the system. Its lease bills through
+         Soundarajan Kumar, the only GST-registered entity. -->
+    <record id="demo_unit_s01" model="lhc.unit">
+        <field name="code">S-01</field>
+        <field name="property_id" ref="demo_prop_lakeview"/>
+        <field name="unit_type">Commercial Shop</field>
+        <field name="area_sqft">480</field>
+        <field name="super_builtup_area">540</field>
+        <field name="own_eb_no">EB-UNIT-100447</field>
+        <field name="door_no">Shop S-01, Ground Floor</field>
+        <field name="status">vacant</field>
+    </record>
+
+    <!-- ==============================================================
+         FIXTURES — the checklist a vacate settlement is scored against.
+         One with a GST vendor bill, one without, so the fixture GST
+         column has both cases.
+         ============================================================== -->
+
+    <record id="demo_fixture_geyser" model="lhc.fixture.purchase">
+        <field name="name">Racold 25L Geyser</field>
+        <field name="quantity">1</field>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(months=14)).strftime('%Y-%m-%d')"/>
+        <field name="cost_before_gst">8900</field>
+        <field name="gst_bill" eval="True"/>
+        <field name="gst_amount">1602</field>
+        <field name="vendor">Sri Balaji Electricals</field>
+        <field name="unit_id" ref="demo_unit_a101"/>
+        <field name="move_in_condition">good</field>
+    </record>
+
+    <record id="demo_fixture_ac" model="lhc.fixture.purchase">
+        <field name="name">Voltas 1.5T Split AC</field>
+        <field name="quantity">1</field>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(months=20)).strftime('%Y-%m-%d')"/>
+        <field name="cost_before_gst">31500</field>
+        <field name="gst_bill" eval="True"/>
+        <field name="gst_amount">5670</field>
+        <field name="vendor">Vasanth &amp; Co</field>
+        <field name="unit_id" ref="demo_unit_a101"/>
+        <field name="move_in_condition">new</field>
+    </record>
+
+    <!-- No vendor bill: cash purchase from a local carpenter. -->
+    <record id="demo_fixture_wardrobe" model="lhc.fixture.purchase">
+        <field name="name">Built-in Wardrobe (2 door)</field>
+        <field name="quantity">2</field>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(months=26)).strftime('%Y-%m-%d')"/>
+        <field name="cost_before_gst">18000</field>
+        <field name="gst_bill" eval="False"/>
+        <field name="vendor">Murugan Carpentry</field>
+        <field name="unit_id" ref="demo_unit_b201"/>
+        <field name="move_in_condition">fair</field>
+    </record>
+
+    <record id="demo_fixture_shutter" model="lhc.fixture.purchase">
+        <field name="name">Rolling Shutter with Lock</field>
+        <field name="quantity">1</field>
+        <field name="purchase_date" eval="(DateTime.today() - relativedelta(months=9)).strftime('%Y-%m-%d')"/>
+        <field name="cost_before_gst">24000</field>
+        <field name="gst_bill" eval="True"/>
+        <field name="gst_amount">4320</field>
+        <field name="vendor">Chennai Shutters</field>
+        <field name="unit_id" ref="demo_unit_s01"/>
+        <field name="move_in_condition">new</field>
+    </record>
+
+    <!-- ==============================================================
+         BOOKING — a token advance against A-102, which is why that unit
+         reads Booked rather than Vacant.
+         ============================================================== -->
+
+    <record id="demo_booking_a102" model="lhc.booking">
+        <field name="unit_id" ref="demo_unit_a102"/>
+        <field name="prospect_name">Karthik Subramanian</field>
+        <field name="phone">+91 98841 55207</field>
+        <field name="token_amount">25000</field>
+        <field name="date_received" eval="(DateTime.today() - relativedelta(days=9)).strftime('%Y-%m-%d')"/>
+        <field name="mode">upi</field>
+        <field name="state">booked</field>
+        <field name="note">Token received via GPay. Agreement drafting pending KYC.</field>
+    </record>
+
+</odoo>
