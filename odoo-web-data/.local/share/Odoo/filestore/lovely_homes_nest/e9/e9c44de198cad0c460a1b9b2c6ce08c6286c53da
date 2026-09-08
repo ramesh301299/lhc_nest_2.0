@@ -1,0 +1,17 @@
+
+
+/* ## CSS error message ##*/
+body::before {
+  font-weight: bold;
+  content: "A css error occured, using an old style to render this page";
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 100000000000;
+  background-color: #C00;
+  color: #DDD;
+}
+
+css_error_message {
+  content: "Could not get content for lhc_nest_theme/static/src/scss/_lhc_tokens.scss.\ACould not get content for lhc_nest_theme/static/src/scss/_odoo_variables.scss.";
+}

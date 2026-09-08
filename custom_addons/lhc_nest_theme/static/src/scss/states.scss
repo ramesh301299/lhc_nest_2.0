@@ -7,9 +7,19 @@
 // ---- Loading -------------------------------------------------------------
 body.o_web_client {
 
-    // Odoo's top loading bar
-    .o_loading_indicator,
-    .o_loading {
+    // Odoo's top loading bar — the stock bottom-right pill, and the "Loading"
+    // row inside an autocomplete dropdown.
+    //
+    // `:not(.lhc-loader)` is what keeps this off the brand overlay. The theme
+    // replaces the stock indicator with a FULL-SCREEN element that carries
+    // both classes (`o_loading_indicator lhc-loader`), and this selector is
+    // (0,2,1) against the overlay's own (0,2,0) — so without the exclusion it
+    // wins outright and repaints the whole viewport navy, which is exactly
+    // what a module upgrade looked like: a wall of dark blue for the length of
+    // the request. The overlay owns its own appearance in loader/lhc_loader.scss;
+    // this rule is only for the stock pill it did not replace.
+    .o_loading_indicator:not(.lhc-loader),
+    .o_loading:not(.lhc-loader) {
         background: var(--lhc-navy);
         color: #fff;
         border-radius: 20px;

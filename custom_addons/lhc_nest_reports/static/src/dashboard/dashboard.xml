@@ -90,7 +90,13 @@
                                  t-att-tabindex="a.action ? 0 : null"
                                  t-on-click="() => this.openCard(a)"
                                  t-on-keydown="(ev) => this.onCardKeydown(ev, a)">
-                                <span class="o_lhc_alert_icon" aria-hidden="true" t-esc="a.icon"/>
+                                <!-- `a.icon` is a Font Awesome class name, not
+                                     a glyph: t-esc printed it, so the rows read
+                                     "fa-bell-o 1 Expiring in 30 Days". Same
+                                     shape as the cards above. -->
+                                <span class="o_lhc_alert_icon" aria-hidden="true">
+                                    <i t-att-class="'fa ' + (a.icon or 'fa-circle-o')"/>
+                                </span>
                                 <span class="o_lhc_alert_text">
                                     <strong t-esc="a.value"/> <t t-esc="a.label"/>
                                 </span>

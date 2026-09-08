@@ -105,10 +105,22 @@
         max-width: 900px;
     }
 
-    // Wide tables scroll inside the panel instead of the page.
+    // Wide tables scroll inside their own wrapper instead of the page.
+    //
+    // The scroll belongs on the wrapper `<div>` the template already puts
+    // around every table, NOT on the `<table>` itself. `display: block` on a
+    // table element does not make the table a block — the rows inside it still
+    // need a table box, so the browser generates an ANONYMOUS one within the
+    // block, and that anonymous box is shrink-to-fit. The result is a table
+    // element that dutifully fills the panel while its columns stay bunched
+    // against the left edge, which is exactly what the widened Overdue and
+    // Collection panels showed: a full-width box with the data in the first
+    // third of it.
+    .o_lhc_table_wrap { overflow-x: auto; }
+
     .o_lhc_table {
-        display: block;
-        overflow-x: auto;
+        // Now a real table box again, so this width reaches the columns.
+        width: 100%;
         white-space: nowrap;
 
         tbody tr.o_lhc_clickable {

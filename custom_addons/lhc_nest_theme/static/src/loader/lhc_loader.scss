@@ -18,7 +18,14 @@
 // live RPC and clears the moment the last one lands.
 // ===========================================================================
 
-.o_loading_indicator.lhc-loader {
+// `body` is in the selector on purpose, taking it to (0,2,1). Two rules were
+// beating the bare `.o_loading_indicator.lhc-loader` (0,2,0): states.scss's
+// `body.o_web_client .o_loading_indicator`, which repainted the whole overlay
+// navy, and anything else that ever reaches the indicator through the body.
+// The overlay lives inside <body> in both places it is used — the webclient
+// mounts it in MainComponentsContainer, and lhc_login_loader.js appends it to
+// document.body — so the one selector covers the backend and the login screen.
+body .o_loading_indicator.lhc-loader {
     // Odoo pins its own indicator to a corner with `position: fixed` and
     // offsets; every one of those has to be undone before centring.
     position: fixed;
@@ -52,7 +59,32 @@
     font-size: 0;
 }
 
+// The panel centres ITSELF rather than relying on the overlay's flexbox.
+//
+// The overlay above is still a centring flex container, and in a healthy page
+// the two agree. But the flex route has a single point of failure: it needs
+// the overlay to keep `display: flex` AND to keep its full-viewport box. Lose
+// either — a more specific rule reaching `.o_loading_indicator`, or a
+// transformed ancestor turning `position: fixed` into a box measured off that
+// ancestor instead of the viewport — and the child collapses to the top-left
+// corner. That is the shape of the "panel in the top-left" report from
+// Windows; it was not reproducible here, so this removes the dependency
+// rather than chasing the trigger.
+//
+// `position: fixed` + a half-size translate is the belt to that braces. It is
+// measured off the viewport, so it does not care what the parent's `display`
+// is, whether the parent is full-screen, or whether the parent is still
+// pinned to a corner by Odoo's own rule. Both mechanisms now have to fail for
+// the panel to move, and they fail for different reasons.
 .lhc-loader-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    // Never wider than the screen it is centred on — at 320px the 44px side
+    // padding alone would otherwise push it off the edge.
+    max-width: #{"min(calc(100vw - 32px), 420px)"};
+
     display: flex;
     flex-direction: column;
     align-items: center;

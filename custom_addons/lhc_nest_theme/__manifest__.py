@@ -80,6 +80,11 @@ loss of data, views or functionality.
             # specificity the later file wins — load order is what decides
             # whether stat cards end up one column or two.
             'lhc_nest_theme/static/src/scss/mobile.scss',
+            # The New button, floated out of the app bar into a corner FAB.
+            # After mobile.scss: that file gives every `.btn` a 44px touch
+            # target and a 16px inline padding at <=820px, and the compact
+            # circle has to be able to say otherwise.
+            'lhc_nest_theme/static/src/fab/lhc_fab.scss',
             # The search box must not take focus when a view opens.
             'lhc_nest_theme/static/src/search/lhc_search_focus.js',
             'lhc_nest_theme/static/src/appbar/systray_space.js',

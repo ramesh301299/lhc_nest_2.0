@@ -124,9 +124,21 @@
 }
 
 // The statusbar inside a dialog has no page behind it to separate from.
+//
+// On a page the bar is a real band: a white surface with a rule under it,
+// spanning the form and marking off "actions on this record" from the record
+// itself. In a dialog there is nothing above it and one card below it, so the
+// band was a white strip drawn around a single button — a container with no
+// second thing in it to contain. Confirm now sits directly on the dialog body,
+// and the sheet below is what the eye separates it from.
+//
+// Everything else about the bar is untouched: it is still the same flex row
+// from form.scss, so a form with three workflow buttons still lays them out
+// the same way, at the same height, in the same order.
 .modal .o_form_view .o_form_statusbar {
-    padding-inline: 0;
-    border-bottom: 1px solid var(--lhc-border);
+    background: transparent;
+    border-bottom: 0;
+    padding: 0;
     margin-bottom: var(--lhc-space-4);
     min-height: 0;
 }
