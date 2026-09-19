@@ -1,0 +1,288 @@
+
+/* /web/static/tests/legacy/mobile/helpers.js */
+odoo.define('@web/../tests/legacy/mobile/helpers',['@web/../tests/legacy/helpers/utils'],function(require){'use strict';let __exports={};const{findElement,triggerEvent}=require("@web/../tests/legacy/helpers/utils");async function swipe(target,selector,direction){const touchTarget=findElement(target,selector);if(direction==="left"){touchTarget.scrollLeft=touchTarget.scrollWidth-touchTarget.offsetWidth;}else{touchTarget.scrollLeft=0;}
+await triggerEvent(target,selector,"touchstart",{touches:[{identifier:0,clientX:0,clientY:0,target:touchTarget,},],});await triggerEvent(target,selector,"touchmove",{touches:[{identifier:0,clientX:(direction==="left"?-1:1)*touchTarget.clientWidth,clientY:0,target:touchTarget,},],});await triggerEvent(target,selector,"touchend",{});}
+__exports.swipeRight=swipeRight;async function swipeRight(target,selector){return swipe(target,selector,"right");}
+__exports.swipeLeft=swipeLeft;async function swipeLeft(target,selector){return swipe(target,selector,"left");}
+__exports.tap=tap;async function tap(target,selector){const touchTarget=findElement(target,selector);const box=touchTarget.getBoundingClientRect();const x=box.left+box.width/2;const y=box.top+box.height/2;const touch={identifier:0,target:touchTarget,clientX:x,clientY:y,pageX:x,pageY:y,};await triggerEvent(touchTarget,null,"touchstart",{touches:[touch],});await triggerEvent(touchTarget,null,"touchend",{});}
+return __exports;});odoo.define(`@web/../tests/mobile/helpers`,['@web/../tests/legacy/mobile/helpers'],function(require){return require('@web/../tests/legacy/mobile/helpers');});;
+
+/* /web/static/tests/legacy/mobile/views/calendar_view_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/calendar_view_tests',[],function(require){'use strict';let __exports={};return __exports;});;
+
+/* /web/static/tests/legacy/mobile/views/fields/many2many_tags_field_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/fields/many2many_tags_field_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{getFixture}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");let serverData;let target;QUnit.module("Fields",(hooks)=>{hooks.beforeEach(()=>{target=getFixture();serverData={models:{partner:{fields:{display_name:{string:"Displayed name",type:"char"},timmy:{string:"pokemon",type:"many2many",relation:"partner_type"},},},partner_type:{fields:{name:{string:"Partner Type",type:"char"},},records:[{id:12,display_name:"gold"},{id:14,display_name:"silver"},],},},};setupViewRegistries();});QUnit.module("Many2ManyTagsField");QUnit.test("Many2ManyTagsField placeholder should be correct",async function(assert){await makeView({type:"form",resModel:"partner",serverData,arch:`
+                <form>
+                    <field name="timmy" widget="many2many_tags" placeholder="foo"/>
+                </form>`,});assert.strictEqual(target.querySelector("#timmy_0").placeholder,"foo");});QUnit.test("Many2ManyTagsField placeholder should be empty",async function(assert){await makeView({type:"form",resModel:"partner",serverData,arch:`
+                <form>
+                    <field name="timmy" widget="many2many_tags"/>
+                </form>`,});assert.strictEqual(target.querySelector("#timmy_0").placeholder,"");});});});return __exports;});odoo.define(`@web/../tests/mobile/views/fields/many2many_tags_field_tests`,['@web/../tests/legacy/mobile/views/fields/many2many_tags_field_tests'],function(require){return require('@web/../tests/legacy/mobile/views/fields/many2many_tags_field_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/fields/many2one_barcode_field_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/fields/many2one_barcode_field_tests',['@web/core/autocomplete/autocomplete','@web/core/browser/browser','@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/core/barcode/barcode_dialog'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{AutoComplete}=require("@web/core/autocomplete/autocomplete");const{browser}=require("@web/core/browser/browser");const{click,clickSave,getFixture,patchWithCleanup}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const BarcodeScanner=require("@web/core/barcode/barcode_dialog");let serverData;let target;const NAME_SEARCH="name_search";const PRODUCT_PRODUCT="product.product";const SALE_ORDER_LINE="sale_order_line";const PRODUCT_FIELD_NAME="product_id";async function barcodeMockRPC(route,args,performRPC){if(args.method===NAME_SEARCH&&args.model===PRODUCT_PRODUCT){const result=await performRPC(route,args);const records=serverData.models[PRODUCT_PRODUCT].records.filter((record)=>record.barcode===args.kwargs.name).map((record)=>[record.id,record.name]);return records.concat(result);}}
+QUnit.module("Fields",(hooks)=>{hooks.beforeEach(()=>{target=getFixture();serverData={models:{[PRODUCT_PRODUCT]:{fields:{id:{type:"integer"},name:{},barcode:{},},records:[{id:111,name:"product_cable_management_box",barcode:"601647855631",},{id:112,name:"product_n95_mask",barcode:"601647855632",},{id:113,name:"product_surgical_mask",barcode:"601647855633",},],},[SALE_ORDER_LINE]:{fields:{id:{type:"integer"},[PRODUCT_FIELD_NAME]:{string:PRODUCT_FIELD_NAME,type:"many2one",relation:PRODUCT_PRODUCT,},},},},views:{"product.product,false,kanban":`
+                    <kanban><templates><t t-name="card">
+                        <field name="id"/>
+                        <field name="name"/>
+                        <field name="barcode"/>
+                    </t></templates></kanban>
+                `,"product.product,false,search":"<search></search>",},};setupViewRegistries();patchWithCleanup(AutoComplete,{delay:0,});patchWithCleanup(browser,Object.assign({},browser,{setTimeout:(fn)=>fn(),navigator:{userAgent:"Chrome/0.0.0 (Linux; Android 13; Odoo TestSuite)",mediaDevices:{getUserMedia:()=>[],},},}));});QUnit.module("Many2OneField Barcode (Small)");QUnit.test("barcode button with multiple results",async function(assert){assert.expect(4);const selectedRecordTest=serverData.models[PRODUCT_PRODUCT].records[1];patchWithCleanup(BarcodeScanner,{scanBarcode:async()=>"mask",});await makeView({type:"form",resModel:SALE_ORDER_LINE,serverData,arch:`
+                <form>
+                    <field name="${PRODUCT_FIELD_NAME}" options="{'can_scan_barcode': True}"/>
+                </form>`,async mockRPC(route,args,performRPC){if(args.method==="web_save"&&args.model===SALE_ORDER_LINE){const selectedId=args.args[1][PRODUCT_FIELD_NAME];assert.equal(selectedId,selectedRecordTest.id,`product id selected ${selectedId}, should be ${selectedRecordTest.id} (${selectedRecordTest.barcode})`);return performRPC(route,args,performRPC);}
+return barcodeMockRPC(route,args,performRPC);},});const scanButton=target.querySelector(".o_barcode");assert.containsOnce(target,scanButton,"has scanner barcode button");await click(target,".o_barcode");const modal=target.querySelector(".modal-dialog.modal-lg");assert.containsOnce(target,modal,"there should be one modal opened in full screen");assert.containsN(modal,".o_kanban_record:not(.o_kanban_ghost)",2,"there should be 2 records displayed");await click(modal,".o_kanban_record:nth-child(1)");await clickSave(target);});QUnit.test("many2one with barcode show all records",async function(assert){const selectedRecordTest=serverData.models[PRODUCT_PRODUCT].records[0];patchWithCleanup(BarcodeScanner,{scanBarcode:async()=>selectedRecordTest.barcode,});await makeView({type:"form",resModel:SALE_ORDER_LINE,serverData,arch:`
+                <form>
+                    <field name="${PRODUCT_FIELD_NAME}" options="{'can_scan_barcode': True}"/>
+                </form>`,mockRPC:barcodeMockRPC,});await click(target,".o_barcode");await click(target,".o_input_dropdown > input");const modal=target.querySelector(".modal-dialog.modal-lg");assert.containsOnce(target,modal,"there should be one modal opened in full screen");assert.containsN(modal,".o_kanban_record:not(.o_kanban_ghost)",3,"there should be 3 records displayed");});});});return __exports;});odoo.define(`@web/../tests/mobile/views/fields/many2one_barcode_field_tests`,['@web/../tests/legacy/mobile/views/fields/many2one_barcode_field_tests'],function(require){return require('@web/../tests/legacy/mobile/views/fields/many2one_barcode_field_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/fields/statusbar_field_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/fields/statusbar_field_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/../tests/helpers/cleanup'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{click,getFixture}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{registerCleanup}=require("@web/../tests/helpers/cleanup");let fixture;let serverData;QUnit.module("Mobile Fields",({beforeEach})=>{beforeEach(()=>{setupViewRegistries();fixture=getFixture();fixture.setAttribute("style","width:100vw; height:100vh;");registerCleanup(()=>fixture.removeAttribute("style"));serverData={models:{partner:{fields:{display_name:{string:"Displayed name",type:"char"},trululu:{string:"Trululu",type:"many2one",relation:"partner"},},records:[{id:1,display_name:"first record",trululu:4},{id:2,display_name:"second record",trululu:1},{id:3,display_name:"third record"},{id:4,display_name:"aaa"},],},},};});QUnit.module("StatusBarField");QUnit.test("statusbar is rendered correctly on small devices",async(assert)=>{await makeView({type:"form",resModel:"partner",resId:1,serverData,arch:`
+                <form>
+                    <header>
+                        <field name="trululu" widget="statusbar" />
+                    </header>
+                    <field name="display_name" />
+                </form>
+            `,});assert.containsN(fixture,".o_statusbar_status .o_arrow_button:visible",4);assert.containsOnce(fixture,".o_statusbar_status .o_arrow_button.dropdown-toggle:visible");assert.containsOnce(fixture,".o_statusbar_status .o_arrow_button.o_arrow_button_current");assert.containsNone(fixture,".o-dropdown--menu","dropdown should be hidden");assert.strictEqual(fixture.querySelector(".o_statusbar_status button.dropdown-toggle").textContent.trim(),"...");await click(fixture,".o_statusbar_status .dropdown-toggle.o_last");assert.containsOnce(fixture,".o-dropdown--menu","dropdown should be visible");assert.containsOnce(fixture,".o-dropdown--menu .dropdown-item.disabled");});QUnit.test("statusbar with no status on extra small screens",async(assert)=>{await makeView({type:"form",resModel:"partner",resId:4,serverData,arch:`
+                <form>
+                    <header>
+                        <field name="trululu" widget="statusbar" />
+                    </header>
+                </form>
+            `,});assert.doesNotHaveClass(fixture.querySelector(".o_field_statusbar"),"o_field_empty","statusbar widget should have class o_field_empty in edit");assert.containsOnce(fixture,".o_statusbar_status button.dropdown-toggle:visible:disabled");assert.strictEqual($(".o_statusbar_status button.dropdown-toggle:visible:disabled").text().trim(),"...");});QUnit.test("clickable statusbar widget on mobile view",async(assert)=>{await makeView({type:"form",resModel:"partner",resId:1,serverData,arch:`
+                <form>
+                    <header>
+                        <field name="trululu" widget="statusbar" options="{'clickable': '1'}" />
+                    </header>
+                </form>
+            `,});await click($(".o_statusbar_status .dropdown-toggle:visible")[0]);assert.containsOnce(fixture,".o-dropdown--menu .dropdown-item");await click(fixture,".o-dropdown--menu .dropdown-item");assert.strictEqual($(".o_arrow_button_current").text(),"first record");assert.containsN(fixture,".o_statusbar_status .o_arrow_button:visible",3);assert.containsOnce(fixture,".o_statusbar_status .dropdown-toggle:visible");await click($(".o_statusbar_status .dropdown-toggle:visible")[0]);assert.containsN(fixture,".o-dropdown--menu .dropdown-item",2);});});});return __exports;});odoo.define(`@web/../tests/mobile/views/fields/statusbar_field_tests`,['@web/../tests/legacy/mobile/views/fields/statusbar_field_tests'],function(require){return require('@web/../tests/legacy/mobile/views/fields/statusbar_field_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/form_view_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/form_view_tests',['@web/core/registry','@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/views/widgets/attach_document/attach_document'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{registry}=require("@web/core/registry");const{click,editInput,getFixture,makeDeferred,nextTick,patchWithCleanup,}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{AttachDocumentWidget}=require("@web/views/widgets/attach_document/attach_document");let fixture;let serverData;const serviceRegistry=registry.category("services");QUnit.module("Mobile Views",({beforeEach})=>{beforeEach(()=>{setupViewRegistries();fixture=getFixture();serverData={models:{partner:{fields:{display_name:{type:"char",string:"Display Name"},trululu:{type:"many2one",string:"Trululu",relation:"partner"},boolean:{type:"boolean",string:"Bool"},},records:[{id:1,display_name:"first record",trululu:4},{id:2,display_name:"second record",trululu:1},{id:4,display_name:"aaa"},],},},};});QUnit.module("FormView");QUnit.test(`statusbar buttons are correctly rendered in mobile`,async(assert)=>{await makeView({type:"form",resModel:"partner",resId:1,serverData,arch:`
+                <form>
+                    <header>
+                        <button string="Confirm" />
+                        <button string="Do it" />
+                    </header>
+                    <sheet>
+                        <group>
+                            <button name="display_name" />
+                        </group>
+                    </sheet>
+                </form>
+            `,});await click(fixture,".o_cp_action_menus button:has(.fa-cog)");assert.containsOnce(fixture,".o-dropdown--menu:visible","dropdown should be visible");assert.containsN(fixture,".o-dropdown--menu button",2,"dropdown should contain 2 buttons");});QUnit.test(`statusbar widgets should appear in the CogMenu dropdown`,async(assert)=>{serviceRegistry.add("http",{start:()=>({}),});await makeView({type:"form",resModel:"partner",serverData,resId:2,arch:`
+                    <form>
+                        <header>
+                            <widget name="attach_document" string="Attach document" />
+                            <button string="Ciao" invisible="display_name == 'first record'" />
+                        </header>
+                        <sheet>
+                            <group>
+                                <field name="display_name" />
+                            </group>
+                        </sheet>
+                    </form>
+                `,});assert.containsOnce(fixture,".o_cp_action_menus button:has(.fa-cog)","should have 'CogMenu' dropdown");await click(fixture,".o_cp_action_menus button:has(.fa-cog)");assert.containsN(fixture,".o-dropdown--menu button",2,"should have 2 buttons in the dropdown");await editInput(fixture,".o_field_widget[name=display_name] input","first record");assert.containsOnce(fixture,".o-dropdown--menu button","should have 1 button in the dropdown");});QUnit.test(`CogMenu dropdown should keep its open/close state`,async function(assert){await makeView({type:"form",resModel:"partner",serverData,arch:`
+                    <form>
+                        <header>
+                            <button string="Just more than one" />
+                            <button string="Confirm" invisible="display_name == ''" />
+                            <button string="Do it" invisible="display_name != ''" />
+                        </header>
+                        <sheet>
+                            <field name="display_name" />
+                        </sheet>
+                    </form>
+                `,});assert.containsOnce(fixture,".o_cp_action_menus button:has(.fa-cog)","should have a 'CogMenu' dropdown");assert.doesNotHaveClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should be closed");await click(fixture,".o_cp_action_menus button:has(.fa-cog)");assert.hasClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should be opened");await editInput(fixture,".o_field_widget[name=display_name] input","test");assert.containsOnce(fixture,".o_cp_action_menus button:has(.fa-cog)","should have a 'CogMenu' dropdown");assert.hasClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should still be opened");});QUnit.test(`CogMenu dropdown's open/close state shouldn't be modified after 'onchange'`,async function(assert){serverData.models.partner.onchanges={display_name:async()=>{},};const onchangeDef=makeDeferred();await makeView({type:"form",resModel:"partner",serverData,arch:`
+                    <form>
+                        <header>
+                            <button name="create" string="Create Invoice" type="action" />
+                            <button name="send" string="Send by Email" type="action" />
+                        </header>
+                        <sheet>
+                            <field name="display_name" />
+                        </sheet>
+                    </form>
+                `,mockRPC(route,{method,args}){if(method==="onchange"&&args[2][0]==="display_name"){return onchangeDef;}},});assert.containsOnce(fixture,".o_cp_action_menus button:has(.fa-cog)","statusbar should contain a dropdown");assert.doesNotHaveClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should be closed");await editInput(fixture,".o_field_widget[name=display_name] input","before onchange");await click(fixture,".o_cp_action_menus button:has(.fa-cog)");assert.hasClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should be opened");onchangeDef.resolve({value:{display_name:"after onchange"}});await nextTick();assert.strictEqual(fixture.querySelector(".o_field_widget[name=display_name] input").value,"after onchange");assert.hasClass(fixture.querySelector(".o_cp_action_menus button:has(.fa-cog)"),"show","dropdown should still be opened");});QUnit.test(`preserve current scroll position on form view while closing dialog`,async function(assert){serverData.views={"partner,false,kanban":`
+                    <kanban>
+                        <templates>
+                            <t t-name="card">
+                                <field name="display_name" />
+                            </t>
+                        </templates>
+                    </kanban>
+                `,"partner,false,search":`
+                    <search />
+                `,};await makeView({type:"form",resModel:"partner",resId:2,serverData,arch:`
+                    <form>
+                        <sheet>
+                            <p style="height:500px" />
+                            <field name="trululu" />
+                            <p style="height:500px" />
+                        </sheet>
+                    </form>
+                `,});let position={top:0,left:0};patchWithCleanup(window,{scrollTo(newPosition){position=newPosition;},get scrollX(){return position.left;},get scrollY(){return position.top;},});window.scrollTo({top:265,left:0});assert.strictEqual(window.scrollY,265,"Should have scrolled 265 px vertically");assert.strictEqual(window.scrollX,0,"Should be 0 px from left as it is");await click(fixture,".o_field_many2one input");assert.containsOnce(fixture,".modal.o_modal_full","there should be a many2one modal opened in full screen");await click(fixture,".modal .modal-header .oi-arrow-left");assert.strictEqual(window.scrollY,265,"Should have scrolled back to 265 px vertically");assert.strictEqual(window.scrollX,0,"Should be 0 px from left as it is");});QUnit.test("attach_document widget also works inside a dropdown",async(assert)=>{let fileInput;patchWithCleanup(AttachDocumentWidget.prototype,{setup(){super.setup();fileInput=this.fileInput;},});serviceRegistry.add("http",{start:()=>({post:(route,params)=>{assert.step("post");assert.strictEqual(route,"/web/binary/upload_attachment");assert.strictEqual(params.model,"partner");assert.strictEqual(params.id,1);return'[{ "id": 5 }, { "id": 2 }]';},}),});await makeView({type:"form",resModel:"partner",resId:1,serverData,arch:`
+                <form>
+                    <header>
+                        <button string="Confirm" />
+                        <widget name="attach_document" string="Attach Document"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <button name="display_name" />
+                        </group>
+                    </sheet>
+                </form>
+            `,});await click(fixture,".o_cp_action_menus button:has(.fa-cog)");await click(fixture,".o_attach_document");fileInput.dispatchEvent(new Event("change"));await nextTick();assert.verifySteps(["post"]);});});});return __exports;});odoo.define(`@web/../tests/mobile/views/form_view_tests`,['@web/../tests/legacy/mobile/views/form_view_tests'],function(require){return require('@web/../tests/legacy/mobile/views/form_view_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/kanban_view_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/kanban_view_tests',['@web/../tests/views/helpers','@web/../tests/helpers/utils','@web/views/view_components/animated_number'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{click,getFixture,patchWithCleanup}=require("@web/../tests/helpers/utils");const{AnimatedNumber}=require("@web/views/view_components/animated_number");let serverData;let target;QUnit.module("Views",(hooks)=>{hooks.beforeEach(()=>{patchWithCleanup(AnimatedNumber,{enableAnimations:false});serverData={models:{partner:{fields:{foo:{string:"Foo",type:"char"},product_id:{string:"something_id",type:"many2one",relation:"product",},},records:[{id:1,foo:"yop",product_id:3,},{id:2,foo:"blip",product_id:5,},{id:3,foo:"gnap",product_id:3,},{id:4,foo:"blip",product_id:5,},],},product:{fields:{id:{string:"ID",type:"integer"},name:{string:"Display Name",type:"char"},},records:[{id:3,name:"hello"},{id:5,name:"xmo"},],},},views:{},};target=getFixture();setupViewRegistries();});QUnit.module("KanbanView");QUnit.test("Should load grouped kanban with folded column",async(assert)=>{await makeView({type:"kanban",resModel:"partner",serverData,arch:`
+                <kanban>
+                    <progressbar field="foo" colors='{"yop": "success", "blip": "danger"}'/>
+                    <templates>
+                        <t t-name="card">
+                            <field name="foo"/>
+                        </t>
+                    </templates>
+                </kanban>`,groupBy:["product_id"],async mockRPC(route,args,performRPC){if(args.method==="web_read_group"){const result=await performRPC(route,args);result.groups[1].__fold=true;return result;}},});assert.containsN(target,".o_column_progress",2,"Should have 2 progress bar");assert.containsN(target,".o_kanban_group",2,"Should have 2 grouped column");assert.containsN(target,".o_kanban_record",2,"Should have 2 loaded record");assert.containsOnce(target,".o_kanban_load_more","Should have a folded column with a load more button");await click(target,".o_kanban_load_more button");assert.containsNone(target,".o_kanban_load_more","Shouldn't have a load more button");assert.containsN(target,".o_kanban_record",4,"Should have 4 loaded record");});});});return __exports;});odoo.define(`@web/../tests/mobile/views/kanban_view_tests`,['@web/../tests/legacy/mobile/views/kanban_view_tests'],function(require){return require('@web/../tests/legacy/mobile/views/kanban_view_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/list_view_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/list_view_tests',['@web/core/browser/browser','@web/../tests/helpers/utils','@web/../tests/search/helpers','@web/../tests/views/helpers','@web/../tests/legacy/helpers/mock_services'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{browser}=require("@web/core/browser/browser");const{click,getFixture,patchWithCleanup,triggerEvents}=require("@web/../tests/helpers/utils");const{getMenuItemTexts,toggleActionMenu}=require("@web/../tests/search/helpers");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{patchUserWithCleanup}=require("@web/../tests/legacy/helpers/mock_services");let serverData;let fixture;QUnit.module("Mobile Views",({beforeEach})=>{beforeEach(()=>{setupViewRegistries();fixture=getFixture();serverData={models:{foo:{fields:{foo:{string:"Foo",type:"char"},bar:{string:"Bar",type:"boolean"},},records:[{id:1,bar:true,foo:"yop"},{id:2,bar:true,foo:"blip"},{id:3,bar:true,foo:"gnap"},{id:4,bar:false,foo:"blip"},],},},};patchWithCleanup(browser,{setTimeout:(fn)=>fn()||true,clearTimeout:()=>{},});});QUnit.module("ListView");QUnit.test("selection is properly displayed (single page)",async function(assert){patchUserWithCleanup({hasGroup:()=>Promise.resolve(false)});await makeView({type:"list",resModel:"foo",serverData,arch:`
+                <list>
+                    <field name="foo"/>
+                    <field name="bar"/>
+                </list>
+            `,loadActionMenus:true,});assert.containsN(fixture,".o_data_row",4);assert.containsNone(fixture,".o_list_selection_box");assert.containsOnce(fixture,".o_control_panel .fa-search");await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);assert.containsOnce(fixture,".o_list_selection_box");assert.containsOnce(fixture,".o_list_selection_box .o_list_select_domain");assert.containsNone(fixture,".o_control_panel .o_cp_searchview");assert.ok(fixture.querySelector(".o_list_selection_box").textContent.includes("1 selected"));await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);assert.containsNone(fixture,".o_list_selection_box .o_list_select_domain");await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);await triggerEvents(fixture,".o_data_row:nth-child(2)",["touchstart","touchend"]);assert.ok(fixture.querySelector(".o_list_selection_box > span").textContent.includes("2 selected"));assert.ok(fixture.querySelector(".o_list_selection_box > button.o_list_select_domain").textContent.includes("All"));assert.containsOnce(fixture,"div.o_control_panel .o_cp_action_menus");await toggleActionMenu(fixture);assert.deepEqual(getMenuItemTexts(fixture),["Duplicate","Delete"],"action menu should contain the Duplicate and Delete actions");await click(fixture,".o_list_unselect_all");assert.containsNone(fixture,".o_list_selection_box");assert.containsOnce(fixture,".o_control_panel .fa-search");});QUnit.test("selection box is properly displayed (multi pages)",async function(assert){patchUserWithCleanup({hasGroup:()=>Promise.resolve(false)});await makeView({type:"list",resModel:"foo",serverData,arch:`
+                <list limit="3">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                </list>
+            `,loadActionMenus:true,});assert.containsN(fixture,".o_data_row",3);assert.containsNone(fixture,".o_list_selection_box");await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);assert.containsOnce(fixture,".o_list_selection_box");assert.containsOnce(fixture,".o_list_selection_box .o_list_select_domain");assert.ok(fixture.querySelector(".o_list_selection_box").textContent.includes("1 selected"));assert.containsOnce(fixture,".o_list_selection_box");assert.containsOnce(fixture,"div.o_control_panel .o_cp_action_menus");await toggleActionMenu(fixture);assert.deepEqual(getMenuItemTexts(fixture),["Duplicate","Delete"],"action menu should contain the Duplicate and Delete actions");await triggerEvents(fixture,".o_data_row:nth-child(2)",["touchstart","touchend"]);await triggerEvents(fixture,".o_data_row:nth-child(3)",["touchstart","touchend"]);assert.containsOnce(fixture,".o_list_selection_box");assert.containsOnce(fixture,".o_list_selection_box .o_list_select_domain");assert.ok(fixture.querySelector(".o_list_selection_box").textContent.includes("3 selected"));assert.containsOnce(fixture,".o_list_select_domain");await click(fixture,".o_list_selection_box .o_list_select_domain");assert.containsOnce(fixture,".o_list_selection_box");assert.ok(fixture.querySelector(".o_list_selection_box").textContent.includes("All 4 selected"));});QUnit.test("export button is properly hidden",async(assert)=>{await makeView({type:"list",resModel:"foo",serverData,arch:`
+                <list>
+                    <field name="foo"/>
+                    <field name="bar"/>
+                </list>
+            `,});assert.containsN(fixture,".o_data_row",4);assert.isNotVisible(fixture.querySelector(".o_list_export_xlsx"));});QUnit.test("editable readonly list view is disabled",async(assert)=>{await makeView({type:"list",resModel:"foo",serverData,arch:`
+                <list>
+                    <field name="foo" />
+                </list>
+            `,});await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);await click(fixture,".o_data_row:nth-child(1) .o_data_cell:nth-child(1)");assert.containsNone(fixture,".o_selected_row .o_field_widget[name=foo]","The listview should not contains an edit field");});QUnit.test("add custom field button not shown in mobile (with opt. col.)",async(assert)=>{await makeView({type:"list",resModel:"foo",serverData,arch:`
+                    <list>
+                        <field name="foo" />
+                        <field name="bar" optional="hide" />
+                    </list>
+                `,});assert.containsOnce(fixture,"table .o_optional_columns_dropdown_toggle");await click(fixture,"table .o_optional_columns_dropdown_toggle");assert.containsOnce(fixture,".dropdown-item");});QUnit.test("add custom field button not shown to non-system users (wo opt. col.)",async(assert)=>{patchUserWithCleanup({isSystem:false});await makeView({type:"list",resModel:"foo",serverData,arch:`
+                    <list>
+                        <field name="foo" />
+                        <field name="bar" />
+                    </list>
+                `,});assert.containsNone(fixture,"table .o_optional_columns_dropdown_toggle");});QUnit.test("list view header buttons are shift on the cog menus",async(assert)=>{await makeView({type:"list",resModel:"foo",serverData,arch:`
+                <list>
+                    <header>
+                        <button name="x" type="object" class="plaf" string="plaf"/>
+                    </header>
+                    <field name="foo"/>
+                </list>
+            `,});const getTextMenu=()=>[...fixture.querySelectorAll(`.o_popover .o-dropdown-item`)].map((e)=>e.innerText.trim());assert.containsOnce(fixture,".o_control_panel_breadcrumbs .o_cp_action_menus .fa-cog");await click(fixture,".o_control_panel_breadcrumbs .o_cp_action_menus .fa-cog");assert.deepEqual(getTextMenu(),["Export All"]);await triggerEvents(fixture,".o_data_row:nth-child(1)",["touchstart","touchend"]);await click(fixture,".o_control_panel_breadcrumbs .o_cp_action_menus .fa-cog");assert.deepEqual(getTextMenu(),["plaf","Export","Duplicate","Delete"]);});});});return __exports;});odoo.define(`@web/../tests/mobile/views/list_view_tests`,['@web/../tests/legacy/mobile/views/list_view_tests'],function(require){return require('@web/../tests/legacy/mobile/views/list_view_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/view_dialog/select_create_dialog_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/view_dialog/select_create_dialog_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{click,getFixture,editInput}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");QUnit.module("ViewDialogs",(hooks)=>{let serverData;let target;hooks.beforeEach(()=>{target=getFixture();serverData={models:{product:{fields:{id:{type:"integer"},name:{},},records:[{id:111,name:"product_cable_management_box",},],},sale_order_line:{fields:{id:{type:"integer"},product_id:{string:"product_id",type:"many2one",relation:"product",},linked_sale_order_line:{string:"linked_sale_order_line",type:"many2many",relation:"sale_order_line",},},},},views:{"product,false,kanban":`
+                    <kanban><templates><t t-name="card">
+                        <field name="id"/>
+                        <field name="name"/>
+                    </t></templates></kanban>
+                `,"sale_order_line,false,kanban":`
+                    <kanban><templates><t t-name="card">
+                        <field name="id"/>
+                    </t></templates></kanban>
+                `,"product,false,search":"<search></search>",},};setupViewRegistries();});QUnit.module("SelectCreateDialog - Mobile");QUnit.test("SelectCreateDialog: clear selection in mobile",async function(assert){assert.expect(3);await makeView({type:"form",resModel:"sale_order_line",serverData,arch:`
+                <form>
+                    <field name="product_id"/>
+                    <field name="linked_sale_order_line" widget="many2many_tags"/>
+                </form>`,async mockRPC(route,args){if(args.method==="web_save"&&args.model==="sale_order_line"){const{product_id:selectedId}=args.args[1];assert.strictEqual(selectedId,false,`there should be no product selected`);}},});const clearBtnSelector=".btn.o_clear_button";await click(target,'.o_field_widget[name="linked_sale_order_line"] input');let modal=target.querySelector(".modal-dialog.modal-lg");assert.containsNone(modal,clearBtnSelector,"there shouldn't be a Clear button");await click(modal,".o_form_button_cancel");await click(target,'.o_field_widget[name="product_id"] input');modal=target.querySelector(".modal-dialog.modal-lg");await click(modal,".o_kanban_record:nth-child(1)");await click(target,'.o_field_widget[name="product_id"] input');modal=target.querySelector(".modal-dialog.modal-lg");assert.containsOnce(modal,clearBtnSelector,"there should be a Clear button");await click(modal,clearBtnSelector);await click(target,".o_form_button_save");});QUnit.test("SelectCreateDialog: selection_mode should be true",async function(assert){assert.expect(3);serverData.views["product,false,kanban"]=`
+            <kanban>
+                <templates>
+                    <t t-name="card">
+                         <div class="o_primary" t-if="!selection_mode">
+                            <a type="object" name="some_action">
+                                <field name="name"/>
+                            </a>
+                         </div>
+                         <div class="o_primary" t-if="selection_mode">
+                             <field name="name"/>
+                         </div>
+                    </t>
+                </templates>
+            </kanban>`;await makeView({type:"form",resModel:"sale_order_line",serverData,arch:`
+                <form>
+                    <field name="product_id"/>
+                    <field name="linked_sale_order_line" widget="many2many_tags"/>
+                </form>`,async mockRPC(route,args){if(args.method==="web_save"&&args.model==="sale_order_line"){const{product_id:selectedId}=args.args[1];assert.strictEqual(selectedId,111,`the product should be selected`);}
+if(args.method==="some_action"){assert.step("action should not be called");}},});await click(target,'.o_field_widget[name="product_id"] input');await click(target,".modal-dialog.modal-lg .o_kanban_record:nth-child(1) .o_primary span");assert.containsNone(target,".modal-dialog.modal-lg");await click(target,".o_form_button_save");assert.verifySteps([]);});QUnit.test("SelectCreateDialog: default props, create a record",async function(assert){assert.expect(9);serverData.views["product,false,form"]=`<form><field name="display_name"/></form>`;await makeView({type:"form",resModel:"sale_order_line",serverData,arch:`
+                <form>
+                    <field name="product_id"/>
+                    <field name="linked_sale_order_line" widget="many2many_tags"/>
+                </form>`,});await click(target,'.o_field_widget[name="product_id"] input');assert.containsOnce(target,".o_dialog");assert.containsOnce(target,".o_dialog .o_kanban_view .o_kanban_record:not(.o_kanban_ghost)");assert.containsN(target,".o_dialog footer button",2);assert.containsOnce(target,".o_dialog footer button.o_create_button");assert.containsOnce(target,".o_dialog footer button.o_form_button_cancel");assert.containsNone(target,".o_dialog .o_control_panel_main_buttons .o-kanban-button-new");await click(target.querySelector(".o_dialog footer button.o_create_button"));assert.containsN(target,".o_dialog",2);assert.containsOnce(target,".o_dialog .o_form_view");await editInput(target,".o_dialog .o_form_view .o_field_widget input","hello");await click(target.querySelector(".o_dialog .o_form_button_save"));assert.containsNone(target,".o_dialog");});});});return __exports;});odoo.define(`@web/../tests/mobile/views/view_dialog/select_create_dialog_tests`,['@web/../tests/legacy/mobile/views/view_dialog/select_create_dialog_tests'],function(require){return require('@web/../tests/legacy/mobile/views/view_dialog/select_create_dialog_tests');});;
+
+/* /web/static/tests/legacy/mobile/views/widgets/signature_tests.js */
+odoo.define('@web/../tests/legacy/mobile/views/widgets/signature_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/views/widgets/signature/signature'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{click,getFixture,patchWithCleanup,editInput,nextTick}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{SignatureWidget}=require("@web/views/widgets/signature/signature");let serverData;let target;QUnit.module("Widgets",(hooks)=>{hooks.beforeEach(()=>{target=getFixture();serverData={models:{partner:{fields:{display_name:{string:"Name",type:"char"},product_id:{string:"Product Name",type:"many2one",relation:"product",},signature:{string:"",type:"string"},},records:[{id:1,display_name:"Pop's Chock'lit",product_id:7,},],onchanges:{},},product:{fields:{name:{string:"Product Name",type:"char"},},records:[{id:7,display_name:"Veggie Burger",},],},},};setupViewRegistries();});QUnit.module("Signature Widget");QUnit.test("Signature widget works inside of a dropdown",async(assert)=>{assert.expect(7);patchWithCleanup(SignatureWidget.prototype,{async onClickSignature(){await super.onClickSignature(...arguments);assert.step("onClickSignature");},async uploadSignature({signatureImage}){await super.uploadSignature(...arguments);assert.step("uploadSignature");},});await makeView({type:"form",resModel:"partner",resId:1,serverData,arch:`
+                <form>
+                    <header>
+                        <button string="Dummy"/>
+                        <widget name="signature" string="Sign" full_name="display_name"/>
+                    </header>
+                    <field name="display_name" />
+                </form>
+            `,mockRPC:async(route,args)=>{if(route==="/web/sign/get_fonts/"){return{};}},});await editInput(target,".o_field_widget[name=display_name] input","test");await click(target,".o_cp_action_menus button:has(.fa-cog)");await click(target,".o_widget_signature button.o_sign_button");assert.containsOnce(target,".modal-dialog","Should have one modal opened");await click(target,".o_web_sign_auto_button");assert.containsOnce(target,".modal-footer button.btn-primary");let maxDelay=100;while(target.querySelector(".modal-footer button.btn-primary")["disabled"]&&maxDelay>0){await nextTick();maxDelay--;}
+assert.equal(maxDelay>0,true,"Timeout exceeded");await click(target,".modal-footer button.btn-primary:enabled");assert.containsNone(target,".modal-dialog","Should have no modal opened");assert.verifySteps(["onClickSignature","uploadSignature"],"An error has occurred while signing");});});});return __exports;});odoo.define(`@web/../tests/mobile/views/widgets/signature_tests`,['@web/../tests/legacy/mobile/views/widgets/signature_tests'],function(require){return require('@web/../tests/legacy/mobile/views/widgets/signature_tests');});;
+
+/* /web/static/tests/legacy/mobile/webclient/burger_menu/burger_user_menu_tests.js */
+odoo.define('@web/../tests/legacy/mobile/webclient/burger_menu/burger_user_menu_tests',['@web/core/orm_service','@web/core/registry','@web/core/hotkeys/hotkey_service','@web/webclient/burger_menu/burger_user_menu/burger_user_menu','@web/webclient/user_menu/user_menu_items','@web/../tests/helpers/mock_env','@web/../tests/helpers/mock_services','@web/../tests/helpers/utils','@odoo/owl'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{ormService}=require("@web/core/orm_service");const{registry}=require("@web/core/registry");const{hotkeyService}=require("@web/core/hotkeys/hotkey_service");const{BurgerUserMenu}=require("@web/webclient/burger_menu/burger_user_menu/burger_user_menu");const{preferencesItem}=require("@web/webclient/user_menu/user_menu_items");const{makeTestEnv}=require("@web/../tests/helpers/mock_env");const{makeFakeLocalizationService}=require("@web/../tests/helpers/mock_services");const{click,getFixture,mount}=require("@web/../tests/helpers/utils");const{markup}=require("@odoo/owl");const serviceRegistry=registry.category("services");const userMenuRegistry=registry.category("user_menuitems");let target;let env;QUnit.module("BurgerUserMenu",{async beforeEach(){serviceRegistry.add("hotkey",hotkeyService);target=getFixture();},});QUnit.test("can be rendered",async(assert)=>{env=await makeTestEnv();userMenuRegistry.add("bad_item",function(){return{type:"item",id:"bad",description:"Bad",callback:()=>{assert.step("callback bad_item");},sequence:10,};});userMenuRegistry.add("ring_item",function(){return{type:"item",id:"ring",description:"Ring",callback:()=>{assert.step("callback ring_item");},sequence:5,};});userMenuRegistry.add("frodo_item",function(){return{type:"switch",id:"frodo",description:"Frodo",callback:()=>{assert.step("callback frodo_item");},sequence:11,};});userMenuRegistry.add("separator",function(){return{type:"separator",sequence:15,};});userMenuRegistry.add("invisible_item",function(){return{type:"item",id:"hidden",description:"Hidden Power",callback:()=>{assert.step("callback hidden_item");},sequence:5,hide:true,};});userMenuRegistry.add("eye_item",function(){return{type:"item",id:"eye",description:"Eye",callback:()=>{assert.step("callback eye_item");},};});userMenuRegistry.add("html_item",function(){return{type:"item",id:"html",description:markup(`<div>HTML<i class="fa fa-check px-2"></i></div>`),callback:()=>{assert.step("callback html_item");},sequence:20,};});await mount(BurgerUserMenu,target,{env});assert.containsN(target,"a",4);assert.containsOnce(target,".form-switch input.form-check-input");assert.containsOnce(target,"hr");const items=[...target.querySelectorAll("a, .form-switch")]||[];assert.deepEqual(items.map((el)=>el.textContent),["Ring","Bad","Frodo","HTML","Eye"]);for(const item of items){click(item);}
+assert.verifySteps(["callback ring_item","callback bad_item","callback frodo_item","callback html_item","callback eye_item",]);});QUnit.test("can execute the callback of settings",async(assert)=>{const mockRPC=(route)=>{if(route==="/web/dataset/call_kw/res.users/action_get"){return Promise.resolve({name:"Change My Preferences",res_id:0,});}};const testConfig={mockRPC};serviceRegistry.add("localization",makeFakeLocalizationService());serviceRegistry.add("orm",ormService);const fakeActionService={name:"action",start(){return{doAction(actionId){assert.step(""+actionId.res_id);assert.step(actionId.name);return Promise.resolve(true);},};},};serviceRegistry.add("action",fakeActionService,{force:true});env=await makeTestEnv(testConfig);userMenuRegistry.add("profile",preferencesItem);await mount(BurgerUserMenu,target,{env});assert.containsOnce(target,"a");const item=target.querySelector("a");assert.strictEqual(item.textContent,"Preferences");await click(item);assert.verifySteps(["7","Change My Preferences"]);});});return __exports;});odoo.define(`@web/../tests/mobile/webclient/burger_menu/burger_user_menu_tests`,['@web/../tests/legacy/mobile/webclient/burger_menu/burger_user_menu_tests'],function(require){return require('@web/../tests/legacy/mobile/webclient/burger_menu/burger_user_menu_tests');});;
+
+/* /web/static/tests/legacy/mobile/webclient/settings_form_view_tests.js */
+odoo.define('@web/../tests/legacy/mobile/webclient/settings_form_view_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/../tests/mobile/helpers','@web/core/registry','@odoo/owl'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{getFixture,mockTimeout,nextTick}=require("@web/../tests/helpers/utils");const{makeView,setupViewRegistries}=require("@web/../tests/views/helpers");const{swipeLeft,swipeRight}=require("@web/../tests/mobile/helpers");const{registry}=require("@web/core/registry");const{EventBus}=require("@odoo/owl");let serverData,target;const serviceRegistry=registry.category("services");QUnit.module("Mobile SettingsFormView",(hooks)=>{hooks.beforeEach(()=>{serverData={models:{project:{fields:{foo:{string:"Foo",type:"boolean"},bar:{string:"Bar",type:"boolean"},},},},};target=getFixture();setupViewRegistries();});QUnit.module("BaseSettings Mobile");QUnit.test("swipe settings in mobile [REQUIRE TOUCHEVENT]",async function(assert){const{execRegisteredTimeouts}=mockTimeout();serviceRegistry.add("ui",{start(env){Object.defineProperty(env,"isSmall",{value:true,});return{bus:new EventBus(),size:0,isSmall:true,};},});await makeView({type:"form",resModel:"project",serverData,arch:`
+                <form string="Settings" class="oe_form_configuration o_base_settings" js_class="base_settings">
+                    <app string="CRM" name="crm">
+                        <block>
+                            <setting help="this is bar">
+                                <field name="bar"/>
+                            </setting>
+                        </block>
+                    </app>
+                    <app string="Project" name="project">
+                        <block>
+                            <setting help="this is foo">
+                                <field name="foo"/>
+                            </setting>
+                        </block>
+                    </app>
+                </form>`,});await swipeLeft(target,".settings");execRegisteredTimeouts();await nextTick();assert.hasAttrValue(target.querySelector(".selected"),"data-key","project","current setting should be project");await swipeRight(target,".settings");execRegisteredTimeouts();await nextTick();assert.hasAttrValue(target.querySelector(".selected"),"data-key","crm","current setting should be crm");});QUnit.test("swipe settings on larger screen sizes has no effect [REQUIRE TOUCHEVENT]",async function(assert){const{execRegisteredTimeouts}=mockTimeout();serviceRegistry.add("ui",{start(env){Object.defineProperty(env,"isSmall",{value:false,});return{bus:new EventBus(),size:9,isSmall:false,};},});await makeView({type:"form",resModel:"project",serverData,arch:`
+                <form string="Settings" class="oe_form_configuration o_base_settings" js_class="base_settings">
+                    <app string="CRM" name="crm">
+                        <block>
+                            <setting help="this is bar">
+                                <field name="bar"/>
+                            </setting>
+                        </block>
+                    </app>
+                    <app string="Project" name="project">
+                        <block>
+                            <setting help="this is foo">
+                                <field name="foo"/>
+                            </setting>
+                        </block>
+                    </app>
+                </form>`,});await swipeLeft(target,".settings");execRegisteredTimeouts();await nextTick();assert.hasAttrValue(target.querySelector(".selected"),"data-key","crm","current setting should still be crm");});});});return __exports;});odoo.define(`@web/../tests/mobile/webclient/settings_form_view_tests`,['@web/../tests/legacy/mobile/webclient/settings_form_view_tests'],function(require){return require('@web/../tests/legacy/mobile/webclient/settings_form_view_tests');});;
+
+/* /web/static/tests/legacy/mobile/webclient/window_action_tests.js */
+odoo.define('@web/../tests/legacy/mobile/webclient/window_action_tests',['@web/../tests/helpers/utils','@web/../tests/views/helpers','@web/../tests/webclient/helpers'],function(require){'use strict';let __exports={};QUnit.module("web",function(){const{getFixture}=require("@web/../tests/helpers/utils");const{setupViewRegistries}=require("@web/../tests/views/helpers");const{createWebClient,doAction}=require("@web/../tests/webclient/helpers");let serverData,target;QUnit.module("ActionManager",(hooks)=>{hooks.beforeEach(()=>{serverData={models:{project:{fields:{foo:{string:"Foo",type:"boolean"},},records:[{id:1,foo:true,},{id:2,foo:false,},],},},views:{"project,false,list":'<list><field name="foo"/></list>',"project,false,kanban":`
+                <kanban>
+                    <templates>
+                        <t t-name='card'>
+                            <field name='foo' />
+                        </t>
+                    </templates>
+                </kanban>
+                `,"project,false,search":"<search></search>",},};target=getFixture();setupViewRegistries();});QUnit.module("Window Actions");QUnit.test("execute a window action with mobile_view_mode",async(assert)=>{const webClient=await createWebClient({serverData});await doAction(webClient,{xml_id:"project.action",name:"Project Action",res_model:"project",type:"ir.actions.act_window",view_mode:"list,kanban",mobile_view_mode:"list",views:[[false,"kanban"],[false,"list"],],});assert.containsOnce(target,".o_list_view");});});});return __exports;});odoo.define(`@web/../tests/mobile/webclient/window_action_tests`,['@web/../tests/legacy/mobile/webclient/window_action_tests'],function(require){return require('@web/../tests/legacy/mobile/webclient/window_action_tests');});

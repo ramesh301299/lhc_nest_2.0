@@ -14,9 +14,49 @@ from odoo.exceptions import AccessError
 ADMIN_GROUP = 'lhc_nest.group_lhc_admin'
 ACCT_GROUP = 'lhc_nest.group_lhc_accountant'
 
+#: Profile fields an LHC NEST user may read and write on their *own* record,
+#: on top of the ones Odoo already allows (name, email, image_1920, lang, tz,
+#: signature...).
+#:
+#: Both are delegated from ``res.partner`` through the ``_inherits`` link, so
+#: writing them here updates the same partner record the web client writes.
+#: ``function`` is Odoo's "Job Position" and is what both front ends label
+#: "Designation".
+#:
+#: This is the one definition of "what a user may change about themselves".
+#: The Odoo Preferences dialog and ``POST /api/mobile/profile`` both go through
+#: ``res.users.write()``, which reads these lists — so the web app and the
+#: mobile app cannot drift apart on which fields are self-service, and neither
+#: of them needs ``sudo()`` to offer them.
+LHC_SELF_PROFILE_FIELDS = ['phone', 'function']
+
 
 class ResUsers(models.Model):
     _inherit = 'res.users'
+
+    # ------------------------------------------------------------------
+    # Self-service profile
+    # ------------------------------------------------------------------
+    @property
+    def SELF_READABLE_FIELDS(self):
+        """Odoo's own list, plus the two LHC NEST profile fields.
+
+        Overriding the property is the documented extension point — the base
+        implementation says so in its own docstring — so this survives an Odoo
+        upgrade that adds fields of its own to the list.
+        """
+        return super().SELF_READABLE_FIELDS + LHC_SELF_PROFILE_FIELDS
+
+    @property
+    def SELF_WRITEABLE_FIELDS(self):
+        """See :data:`LHC_SELF_PROFILE_FIELDS`.
+
+        ``res.users.write()`` only escalates to superuser when *every* key in
+        the write is on this list; anything else falls back to the caller's own
+        access rights. Adding a field here is therefore the whole permission
+        change — no controller may hand itself more than this.
+        """
+        return super().SELF_WRITEABLE_FIELDS + LHC_SELF_PROFILE_FIELDS
 
     # ------------------------------------------------------------------
     # Role, as the front ends ask for it

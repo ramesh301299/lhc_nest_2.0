@@ -34,7 +34,7 @@ The visual layer is ``lhc_nest_theme``, which depends on none of the above.
     'author': 'SDK Infinity',
     'website': 'https://www.lovelyhomecreators.com',
     'category': 'LHC NEST',
-    'version': '18.0.2.0.1',
+    'version': '18.0.2.1.0',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -45,6 +45,7 @@ The visual layer is ``lhc_nest_theme``, which depends on none of the above.
         'security/ir.model.access.csv',
         'security/lhc_security_rules.xml',
         'data/billing_entity_data.xml',
+        'views/res_users_views.xml',
         'views/billing_entity_views.xml',
         'views/menus.xml',
     ],

@@ -3,6 +3,7 @@
 from . import base_controller
 from . import health
 from . import auth
+from . import profile
 from . import dashboard
 from . import dues
 from . import agreement_detail
