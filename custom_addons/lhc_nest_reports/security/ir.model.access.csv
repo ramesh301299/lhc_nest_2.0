@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_withdrawal_admin,withdrawal.admin,model_lhc_withdrawal,lhc_nest.group_lhc_admin,1,1,1,1
-access_gst_payment_admin,gst.payment.admin,model_lhc_gst_payment,lhc_nest.group_lhc_admin,1,1,1,1
-access_auditor_fee_admin,auditor.fee.admin,model_lhc_auditor_fee,lhc_nest.group_lhc_admin,1,1,1,1
