@@ -1,0 +1,17 @@
+
+
+/* ## CSS error message ##*/
+body::before {
+  font-weight: bold;
+  content: "A css error occured, using an old style to render this page";
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 100000000000;
+  background-color: #C00;
+  color: #DDD;
+}
+
+css_error_message {
+  content: "Error: Undefined variable: \"$modal-inner-padding\".\A        on line 7:15 of /stdin\A>>         top: -$modal-inner-padding;\A\A   --------------^\AThis error occurred while compiling the bundle 'web_editor.assets_media_dialog' containing:\A    - /web_editor/static/src/components/media_dialog/media_dialog.scss\A    - /web_editor/static/src/components/upload_progress_toast/upload_progress_toast.scss";
+}
