@@ -23,6 +23,20 @@ services:
     image: odoo:18
     container_name: lovelyhomenest_dev-web
     restart: always
+    # Pin the SERVER to one database.
+    #
+    # Odoo auto-selects a database only when there is exactly one. The moment a
+    # second exists -- a `--test-enable` run leaves `lhc_mobtest_<epoch>` or an
+    # audit database behind -- it can no longer choose, and every
+    # /api/mobile/* route answers 404 with the db logged as `?` while /web/login
+    # answers 303. Nothing in that says "ambiguous database".
+    #
+    # This lives HERE and not in config/odoo.conf on purpose: odoo.conf is
+    # shared with `docker compose run ... odoo -d <test_db> --test-enable`, and
+    # a filter there routes the HttpCase requests to lovely_homes_nest instead
+    # of the test database -- every mobile_rest_api HTTP test then fails 401.
+    # A `run` command replaces this one, so test runs are unaffected.
+    command: odoo --db-filter=^lovely_homes_nest$$
     depends_on:
       db:
         condition: service_healthy
