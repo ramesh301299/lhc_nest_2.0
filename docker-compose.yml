@@ -49,7 +49,7 @@ services:
     volumes:
       - ./odoo-web-data:/var/lib/odoo
       - ./config:/etc/odoo
-      - ./odoo18_hlc_nest:/mnt/extra-addons
+      - ./odoo18_lhc_nest:/mnt/extra-addons
 
 volumes:
   db_data:
